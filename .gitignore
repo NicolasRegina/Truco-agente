@@ -1,0 +1,46 @@
+# Agent, Antigravity & Skills
+.agent/
+.gemini/
+.system_generated/
+skills/
+brain/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs
+dist/
+dist-ssr/
+*.local
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs & Diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+crashes/
+logs/
+
+# Editor & IDE directories
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS temp files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  background-color: #081c15;
+}
+
+/* Argentine Felt Table Pattern */
+.bg-felt-texture {
+  background-color: #1b4332;
+  background-image: radial-gradient(circle at 50% 50%, #2d6a4f 0%, #1b4332 70%, #0d281e 100%);
+}
+
+.bg-wood-border {
+  background-color: #381608;
+  background-image: linear-gradient(135deg, #5c2c16 0%, #381608 50%, #220d04 100%);
+  border: 4px solid #8B4513;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.8);
+}
+
+/* Card Glow Effects */
+.card-macho {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.card-hembra {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.7), 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.card-siete-oro {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.7), 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Animations */
+@keyframes dealIn {
+  from {
+    transform: translateY(60px) scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-deal {
+  animation: dealIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popSpeech {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-speech {
+  animation: popSpeech 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
