@@ -14,7 +14,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@truco/core": ["../core/src/index.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../core/src"]
 }

@@ -1,5 +1,4 @@
 import {
-  ActionType,
   Card,
   GameAction,
   GameState,
@@ -36,8 +35,6 @@ export function chooseBotAction(
   const sortedHandAsc = [...botHand].sort((a, b) => a.rank - b.rank);
   // Highest card
   const highestCard = sortedHandAsc[sortedHandAsc.length - 1];
-  // Lowest card
-  const lowestCard = sortedHandAsc[0];
 
   // ----------------------------------------------------
   // 1. FLOR CHALLENGE HANDLING

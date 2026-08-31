@@ -4,12 +4,10 @@ import {
   EnvidoCallType,
   FlorCallType,
   GameAction,
-  GamePhase,
   GameState,
   HandLogEntry,
   MatchConfig,
   PlayerId,
-  Trick,
   TrickWinner,
   TrucoBetLevel
 } from './types';
@@ -96,7 +94,6 @@ export function getAvailableActions(state: GameState, player: PlayerId): ActionT
   }
 
   const actions: ActionType[] = [];
-  const other = getOtherPlayer(player);
 
   if (state.phase === 'waiting_action') {
     // 1. Can play any card in hand
