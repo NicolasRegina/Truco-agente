@@ -11,10 +11,13 @@
     "test": "npm run test --workspace=core",
     "build": "npm run build --workspaces",
     "build:server": "npm run build --workspace=@truco/core && npm run build --workspace=@truco/server",
-    "start:server": "node server/dist/server.js",
+    "start:server": "npx tsx server/src/server.ts",
     "dev:server": "npm run dev --workspace=server",
     "dev:client": "npm run dev --workspace=client",
     "dev": "npm run dev:client"
+  },
+  "dependencies": {
+    "tsx": "^4.19.3"
   },
   "devDependencies": {
     "typescript": "^5.7.3"
