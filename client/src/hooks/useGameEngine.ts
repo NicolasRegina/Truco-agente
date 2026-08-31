@@ -28,7 +28,7 @@ export function useGameEngine({
   aiDifficulty = 'canchero',
   roomId,
   myPlayerId = 'p1',
-  wsUrl = (import.meta as any).env?.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
+  wsUrl = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
 }: UseGameEngineOptions) {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(config));
   const [activePlayerId, setActivePlayerId] = useState<PlayerId>(myPlayerId);
@@ -60,8 +60,15 @@ export function useGameEngine({
   useEffect(() => {
     if (mode !== 'online') return;
 
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+    } catch (e) {
+      console.error('Error creating WebSocket connection to', wsUrl, e);
+      alert(`No se pudo conectar al servidor de juego en: ${wsUrl}`);
+      return;
+    }
 
     ws.onopen = () => {
       setConnected(true);
@@ -84,6 +91,10 @@ export function useGameEngine({
           })
         );
       }
+    };
+
+    ws.onerror = (event) => {
+      console.error('WebSocket connection error on', wsUrl, event);
     };
 
     ws.onmessage = (event) => {
