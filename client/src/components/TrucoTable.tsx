@@ -11,7 +11,9 @@ import { ScoreBoard } from './ScoreBoard';
 import { ActionBar } from './ActionBar';
 import { ChatEmotes } from './ChatEmotes';
 import { ConfirmModal } from './ConfirmModal';
-import { TableTheme } from './Lobby';
+import { ThemeStoreModal } from './ThemeStoreModal';
+import { ThemeId } from '../themes/types';
+import { getTheme } from '../themes/themeRegistry';
 import { soundFx } from '../utils/soundController';
 import { ScrollText, Trophy, Volume2, VolumeX, ArrowLeft, RefreshCw, Mic, MicOff, EyeOff, Palette } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -26,8 +28,8 @@ interface TrucoTableProps {
   onSendChat: (text: string) => void;
   isOnlineMultiplayer?: boolean;
   roomId?: string;
-  theme: TableTheme;
-  onThemeChange: (theme: TableTheme) => void;
+  themeId: ThemeId;
+  onThemeChange: (themeId: ThemeId) => void;
 }
 
 export const TrucoTable: React.FC<TrucoTableProps> = ({
@@ -40,15 +42,17 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   onSendChat,
   isOnlineMultiplayer = false,
   roomId,
-  theme,
+  themeId,
   onThemeChange
 }) => {
   const [showLogs, setShowLogs] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [voicesEnabled, setVoicesEnabled] = useState(true);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
-  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showThemeStore, setShowThemeStore] = useState(false);
   const [coveredMode, setCoveredMode] = useState(false);
+
+  const currentTheme = getTheme(themeId);
 
   const opponentId: PlayerId = myPlayerId === 'p1' ? 'p2' : 'p1';
   const myName = myPlayerId === 'p1' ? (state.config.p1Name || 'Jugador 1') : (state.config.p2Name || 'Jugador 2');
@@ -115,15 +119,8 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   const mySpeech = getLastCanto(myPlayerId);
   const oppSpeech = getLastCanto(opponentId);
 
-  const themeClasses: Record<TableTheme, { outer: string; felt: string }> = {
-    verde: { outer: 'bg-felt-dark', felt: 'bg-[#0e3b24]' },
-    azul: { outer: 'bg-[#091526]', felt: 'bg-[#0c2340]' },
-    rojo: { outer: 'bg-[#2b050d]', felt: 'bg-[#4c0519]' },
-    madera: { outer: 'bg-[#1c0d05]', felt: 'bg-[#2e1708]' }
-  };
-
   return (
-    <div className={`relative w-full h-[100dvh] ${themeClasses[theme].outer} flex flex-col justify-between overflow-hidden transition-colors duration-500`}>
+    <div className={`relative w-full h-[100dvh] ${currentTheme.colors.tableOuter} flex flex-col justify-between overflow-hidden transition-colors duration-500`}>
       {/* Top Header Bar */}
       <header className="flex items-center justify-between px-3 sm:px-6 py-2 bg-black/40 backdrop-blur-md border-b border-amber-900/40 z-30">
         <div className="flex items-center gap-2">
@@ -173,9 +170,9 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         {/* Action icons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
-            onClick={() => setShowThemePicker(!showThemePicker)}
+            onClick={() => setShowThemeStore(true)}
             className="p-1.5 sm:p-2 rounded-lg bg-stone-800/80 hover:bg-stone-700 text-amber-200"
-            title="Cambiar Tema"
+            title="Temas y Skins"
           >
             <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -205,39 +202,8 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
       </header>
 
-      {/* Theme Picker Dropdown */}
-      {showThemePicker && (
-        <div className="absolute top-14 right-12 z-40 bg-stone-900/95 border border-amber-500/60 p-3 rounded-2xl shadow-2xl backdrop-blur-md animate-speech flex flex-col gap-2">
-          <span className="text-[11px] font-extrabold uppercase text-amber-400">Color del Paño</span>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'verde', label: 'Verde Clásico', color: 'bg-[#15803d]' },
-              { id: 'azul', label: 'Azul Casino', color: 'bg-[#1d4ed8]' },
-              { id: 'rojo', label: 'Rojo Pulpería', color: 'bg-[#be123c]' },
-              { id: 'madera', label: 'Madera Criolla', color: 'bg-[#854d0e]' }
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  onThemeChange(t.id as TableTheme);
-                  setShowThemePicker(false);
-                }}
-                className={`p-2 rounded-xl flex items-center gap-2 border text-xs font-bold text-stone-200 transition-all ${
-                  theme === t.id
-                    ? 'border-amber-400 bg-amber-950/60 ring-2 ring-amber-400/50'
-                    : 'border-stone-700 bg-black/40 hover:bg-stone-800'
-                }`}
-              >
-                <div className={`w-3.5 h-3.5 rounded-full ${t.color} border border-amber-300`}></div>
-                <span>{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Main Table Arena */}
-      <main className={`flex-1 relative flex flex-col justify-between p-2 sm:p-4 ${themeClasses[theme].felt} bg-felt-texture overflow-hidden transition-colors duration-500`}>
+      <main className={`flex-1 relative flex flex-col justify-between p-2 sm:p-4 ${currentTheme.colors.tableFelt} bg-felt-texture overflow-hidden transition-colors duration-500`}>
         {/* Opponent Area (Top) */}
         <div className="flex flex-col items-center gap-2 z-10">
           {/* Opponent Info & Speech */}
@@ -257,10 +223,10 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             )}
           </div>
 
-          {/* Opponent Hand (Face down) */}
+          {/* Opponent Hand (Face down with theme back) */}
           <div className="flex items-center justify-center -space-x-4 sm:-space-x-6">
             {oppHand.map((card, i) => (
-              <CardView key={i} card={card} isFlipped={true} size="sm" />
+              <CardView key={i} card={card} isFlipped={true} size="sm" themeId={themeId} />
             ))}
           </div>
         </div>
@@ -305,7 +271,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                         key={cIdx}
                         className={`transition-transform ${cIdx === 0 ? '-rotate-6' : 'rotate-6'}`}
                       >
-                        <CardView card={pc.card} size="sm" />
+                        <CardView card={pc.card} size="sm" themeId={themeId} />
                       </div>
                     ))}
                   </div>
@@ -367,7 +333,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             )}
           </div>
 
-          {/* Player Hand Cards */}
+          {/* Player Hand Cards with Theme Art */}
           <div className="flex items-center justify-center gap-2 sm:gap-4">
             {myHand.map((card) => {
               const playable = isMyTurn && state.phase === 'waiting_action';
@@ -379,6 +345,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                     onClick={() => handleCardClick(card, coveredMode)}
                     size="md"
                     selected={coveredMode}
+                    themeId={themeId}
                   />
                 </div>
               );
@@ -404,7 +371,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
       {state.phase === 'hand_ended' && !state.matchWinner && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-speech">
           <div className="bg-wood-border p-6 rounded-2xl max-w-sm w-full text-center text-amber-100 border border-amber-500/50 shadow-2xl">
-            <h3 className="text-xl font-extrabold text-amber-400 mb-1">Mano Finalizada</h3>
+            <h3 className="text-xl font-extrabold text-amber-400 mb-1 font-serif">Mano Finalizada</h3>
             <p className="text-sm text-stone-200 mb-4">
               {state.handWinner === myPlayerId ? '¡Ganaste la mano!' : `La mano fue para ${oppName}`}
             </p>
@@ -428,7 +395,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
               <Trophy className="w-9 h-9 text-amber-400" />
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-black text-amber-300 mb-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-amber-300 mb-1 font-serif">
               {state.matchWinner === myPlayerId ? '¡FELICITACIONES, GANASTE!' : '¡PARTIDA FINALIZADA!'}
             </h2>
             <p className="text-sm text-stone-300 mb-4">
@@ -496,6 +463,17 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             onBackToLobby();
           }}
           onCancel={() => setShowQuitConfirm(false)}
+        />
+      )}
+
+      {/* Theme Store Modal */}
+      {showThemeStore && (
+        <ThemeStoreModal
+          currentThemeId={themeId}
+          onSelectTheme={(id) => {
+            onThemeChange(id);
+          }}
+          onClose={() => setShowThemeStore(false)}
         />
       )}
     </div>

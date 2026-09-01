@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { MatchConfig, BotDifficulty, PlayerId } from '@truco/core';
-import { Lobby, TableTheme } from './components/Lobby';
+import { Lobby } from './components/Lobby';
 import { TrucoTable } from './components/TrucoTable';
 import { WaitingRoom } from './components/WaitingRoom';
+import { ThemeId } from './themes/types';
+import { DEFAULT_THEME_ID } from './themes/themeRegistry';
 import { useGameEngine } from './hooks/useGameEngine';
 
 type Screen = 'lobby' | 'game';
@@ -10,8 +12,8 @@ type Screen = 'lobby' | 'game';
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('lobby');
   const [gameMode, setGameMode] = useState<'ai' | 'online'>('ai');
-  const [theme, setTheme] = useState<TableTheme>(() => {
-    return ((typeof localStorage !== 'undefined' && localStorage.getItem('truco_table_theme')) as TableTheme) || 'verde';
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
+    return ((typeof localStorage !== 'undefined' && localStorage.getItem('truco_theme_id')) as ThemeId) || DEFAULT_THEME_ID;
   });
   const [config, setConfig] = useState<MatchConfig>({
     maxScore: 30,
@@ -40,10 +42,10 @@ export const App: React.FC = () => {
     myPlayerId
   });
 
-  const handleThemeChange = (newTheme: TableTheme) => {
-    setTheme(newTheme);
+  const handleThemeChange = (newThemeId: ThemeId) => {
+    setThemeId(newThemeId);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('truco_table_theme', newTheme);
+      localStorage.setItem('truco_theme_id', newThemeId);
     }
   };
 
@@ -93,7 +95,7 @@ export const App: React.FC = () => {
         onStartAiGame={handleStartAiGame}
         onCreateOnlineRoom={handleCreateOnlineRoom}
         onJoinOnlineRoom={handleJoinOnlineRoom}
-        currentTheme={theme}
+        currentThemeId={themeId}
         onThemeChange={handleThemeChange}
       />
     );
@@ -122,7 +124,7 @@ export const App: React.FC = () => {
       onSendChat={handleSendChat}
       isOnlineMultiplayer={gameMode === 'online'}
       roomId={serverRoomId || onlineRoomId}
-      theme={theme}
+      themeId={themeId}
       onThemeChange={handleThemeChange}
     />
   );

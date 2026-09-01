@@ -3,23 +3,25 @@ import { MatchConfig } from '@truco/core';
 import { BotDifficulty, loadPlayerStats, PlayerStats } from '@truco/core';
 import { Bot, Globe, Play, Sparkles, Trophy, Palette } from 'lucide-react';
 import { StatsModal } from './StatsModal';
+import { ThemeStoreModal } from './ThemeStoreModal';
+import { ThemeId } from '../themes/types';
+import { getTheme } from '../themes/themeRegistry';
 
 export type GameMode = 'ai' | 'online_create' | 'online_join';
-export type TableTheme = 'verde' | 'azul' | 'rojo' | 'madera';
 
 interface LobbyProps {
   onStartAiGame: (config: MatchConfig, difficulty: BotDifficulty, playerName: string) => void;
   onCreateOnlineRoom: (config: MatchConfig, playerName: string) => void;
   onJoinOnlineRoom: (roomId: string, playerName: string) => void;
-  currentTheme: TableTheme;
-  onThemeChange: (theme: TableTheme) => void;
+  currentThemeId: ThemeId;
+  onThemeChange: (themeId: ThemeId) => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
   onStartAiGame,
   onCreateOnlineRoom,
   onJoinOnlineRoom,
-  currentTheme,
+  currentThemeId,
   onThemeChange
 }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
@@ -31,8 +33,10 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [withFlor, setWithFlor] = useState<boolean>(false);
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
   const [showStats, setShowStats] = useState(false);
+  const [showThemeStore, setShowThemeStore] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
-  const [showThemePicker, setShowThemePicker] = useState(false);
+
+  const currentTheme = getTheme(currentThemeId);
 
   // Auto-detect invitation URL query parameter (?room=ABC123)
   useEffect(() => {
@@ -74,24 +78,17 @@ export const Lobby: React.FC<LobbyProps> = ({
     }
   };
 
-  const themeBgClasses: Record<TableTheme, string> = {
-    verde: 'bg-felt-dark',
-    azul: 'bg-[#0a192f]',
-    rojo: 'bg-[#3b0712]',
-    madera: 'bg-[#211107]'
-  };
-
   return (
-    <div className={`min-h-[100dvh] ${themeBgClasses[currentTheme]} flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto relative transition-colors duration-500`}>
-      {/* Top Bar with Stats & Theme button */}
+    <div className={`min-h-[100dvh] ${currentTheme.colors.tableOuter} flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto relative transition-colors duration-500`}>
+      {/* Top Bar with Stats & Theme Store button */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
         <button
-          onClick={() => setShowThemePicker(!showThemePicker)}
+          onClick={() => setShowThemeStore(true)}
           className="p-2.5 rounded-full bg-amber-950/80 hover:bg-amber-900 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
-          title="Cambiar Tema"
+          title="Tienda de Temas y Skins"
         >
           <Palette className="w-4 h-4 text-amber-400" />
-          <span className="hidden sm:inline">Tema</span>
+          <span className="hidden sm:inline">Temas ({currentTheme.badge})</span>
         </button>
 
         <button
@@ -107,47 +104,16 @@ export const Lobby: React.FC<LobbyProps> = ({
         </button>
       </div>
 
-      {/* Theme Picker Popover */}
-      {showThemePicker && (
-        <div className="absolute top-16 right-4 z-30 bg-stone-900/95 border border-amber-500/60 p-3 rounded-2xl shadow-2xl backdrop-blur-md animate-speech flex flex-col gap-2">
-          <span className="text-[11px] font-extrabold uppercase text-amber-400">Color del Paño</span>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'verde', label: 'Verde Clásico', color: 'bg-[#15803d]' },
-              { id: 'azul', label: 'Azul Casino', color: 'bg-[#1d4ed8]' },
-              { id: 'rojo', label: 'Rojo Pulpería', color: 'bg-[#be123c]' },
-              { id: 'madera', label: 'Madera Criolla', color: 'bg-[#854d0e]' }
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  onThemeChange(t.id as TableTheme);
-                  setShowThemePicker(false);
-                }}
-                className={`p-2 rounded-xl flex items-center gap-2 border text-xs font-bold text-stone-200 transition-all ${
-                  currentTheme === t.id
-                    ? 'border-amber-400 bg-amber-950/60 ring-2 ring-amber-400/50'
-                    : 'border-stone-700 bg-black/40 hover:bg-stone-800'
-                }`}
-              >
-                <div className={`w-3.5 h-3.5 rounded-full ${t.color} border border-amber-300`}></div>
-                <span>{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Decorative Title */}
       <div className="text-center mb-6 max-w-lg">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-extrabold uppercase tracking-wider mb-2">
-          <Sparkles className="w-3.5 h-3.5" /> Edición Profesional Argentina
+          <Sparkles className="w-3.5 h-3.5" /> {currentTheme.name}
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 tracking-tight font-serif">
           TRUCO ARGENTINO
         </h1>
         <p className="text-xs sm:text-sm text-stone-300 mt-1">
-          Reglas oficiales, IA canchera, baraja española ilustrada y salas online.
+          Reglas oficiales, IA canchera, baraja ilustrada y multijugador online.
         </p>
       </div>
 
@@ -337,6 +303,17 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Stats Modal */}
       {showStats && (
         <StatsModal stats={stats} onClose={() => setShowStats(false)} />
+      )}
+
+      {/* Theme Store & Skins Modal */}
+      {showThemeStore && (
+        <ThemeStoreModal
+          currentThemeId={currentThemeId}
+          onSelectTheme={(id) => {
+            onThemeChange(id);
+          }}
+          onClose={() => setShowThemeStore(false)}
+        />
       )}
     </div>
   );
