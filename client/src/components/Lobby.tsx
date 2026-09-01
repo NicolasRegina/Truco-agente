@@ -1,35 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { MatchConfig } from '@truco/core';
 import { BotDifficulty, loadPlayerStats, PlayerStats } from '@truco/core';
-import { Bot, Users, Globe, Play, Sparkles, Trophy } from 'lucide-react';
+import { Bot, Globe, Play, Sparkles, Trophy, Palette } from 'lucide-react';
 import { StatsModal } from './StatsModal';
 
-export type GameMode = 'ai' | 'local' | 'online_create' | 'online_join';
+export type GameMode = 'ai' | 'online_create' | 'online_join';
+export type TableTheme = 'verde' | 'azul' | 'rojo' | 'madera';
 
 interface LobbyProps {
   onStartAiGame: (config: MatchConfig, difficulty: BotDifficulty, playerName: string) => void;
-  onStartLocalGame: (config: MatchConfig, p1Name: string, p2Name: string) => void;
   onCreateOnlineRoom: (config: MatchConfig, playerName: string) => void;
   onJoinOnlineRoom: (roomId: string, playerName: string) => void;
+  currentTheme: TableTheme;
+  onThemeChange: (theme: TableTheme) => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
   onStartAiGame,
-  onStartLocalGame,
   onCreateOnlineRoom,
-  onJoinOnlineRoom
+  onJoinOnlineRoom,
+  currentTheme,
+  onThemeChange
 }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [playerName, setPlayerName] = useState(() => {
     return (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Nico';
   });
-  const [player2Name, setPlayer2Name] = useState('Amigo');
   const [roomCode, setRoomCode] = useState('');
   const [maxScore, setMaxScore] = useState<15 | 30>(30);
   const [withFlor, setWithFlor] = useState<boolean>(false);
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
   const [showStats, setShowStats] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   // Auto-detect invitation URL query parameter (?room=ABC123)
   useEffect(() => {
@@ -55,13 +58,11 @@ export const Lobby: React.FC<LobbyProps> = ({
       maxScore,
       withFlor,
       p1Name: playerName || 'Jugador 1',
-      p2Name: selectedMode === 'ai' ? `Bot ${aiDifficulty === 'canchero' ? 'Canchero' : aiDifficulty === 'intermedio' ? 'Gaucho' : 'Novato'}` : (player2Name || 'Jugador 2')
+      p2Name: selectedMode === 'ai' ? `Bot ${aiDifficulty === 'canchero' ? 'Canchero' : aiDifficulty === 'intermedio' ? 'Gaucho' : 'Novato'}` : 'Rival'
     };
 
     if (selectedMode === 'ai') {
       onStartAiGame(config, aiDifficulty, playerName);
-    } else if (selectedMode === 'local') {
-      onStartLocalGame(config, playerName, player2Name);
     } else if (selectedMode === 'online_create') {
       onCreateOnlineRoom(config, playerName);
     } else if (selectedMode === 'online_join') {
@@ -73,10 +74,26 @@ export const Lobby: React.FC<LobbyProps> = ({
     }
   };
 
+  const themeBgClasses: Record<TableTheme, string> = {
+    verde: 'bg-felt-dark',
+    azul: 'bg-[#0a192f]',
+    rojo: 'bg-[#3b0712]',
+    madera: 'bg-[#211107]'
+  };
+
   return (
-    <div className="min-h-[100dvh] bg-felt-dark flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto relative">
-      {/* Top Bar with Stats button */}
-      <div className="absolute top-4 right-4 z-20">
+    <div className={`min-h-[100dvh] ${themeBgClasses[currentTheme]} flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto relative transition-colors duration-500`}>
+      {/* Top Bar with Stats & Theme button */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <button
+          onClick={() => setShowThemePicker(!showThemePicker)}
+          className="p-2.5 rounded-full bg-amber-950/80 hover:bg-amber-900 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+          title="Cambiar Tema"
+        >
+          <Palette className="w-4 h-4 text-amber-400" />
+          <span className="hidden sm:inline">Tema</span>
+        </button>
+
         <button
           onClick={() => {
             setStats(loadPlayerStats());
@@ -90,71 +107,90 @@ export const Lobby: React.FC<LobbyProps> = ({
         </button>
       </div>
 
+      {/* Theme Picker Popover */}
+      {showThemePicker && (
+        <div className="absolute top-16 right-4 z-30 bg-stone-900/95 border border-amber-500/60 p-3 rounded-2xl shadow-2xl backdrop-blur-md animate-speech flex flex-col gap-2">
+          <span className="text-[11px] font-extrabold uppercase text-amber-400">Color del Paño</span>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'verde', label: 'Verde Clásico', color: 'bg-[#15803d]' },
+              { id: 'azul', label: 'Azul Casino', color: 'bg-[#1d4ed8]' },
+              { id: 'rojo', label: 'Rojo Pulpería', color: 'bg-[#be123c]' },
+              { id: 'madera', label: 'Madera Criolla', color: 'bg-[#854d0e]' }
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  onThemeChange(t.id as TableTheme);
+                  setShowThemePicker(false);
+                }}
+                className={`p-2 rounded-xl flex items-center gap-2 border text-xs font-bold text-stone-200 transition-all ${
+                  currentTheme === t.id
+                    ? 'border-amber-400 bg-amber-950/60 ring-2 ring-amber-400/50'
+                    : 'border-stone-700 bg-black/40 hover:bg-stone-800'
+                }`}
+              >
+                <div className={`w-3.5 h-3.5 rounded-full ${t.color} border border-amber-300`}></div>
+                <span>{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Decorative Title */}
       <div className="text-center mb-6 max-w-lg">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-extrabold uppercase tracking-wider mb-2">
           <Sparkles className="w-3.5 h-3.5" /> Edición Profesional Argentina
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 tracking-tight">
+        <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 tracking-tight font-serif">
           TRUCO ARGENTINO
         </h1>
         <p className="text-xs sm:text-sm text-stone-300 mt-1">
-          Juego completo con reglas oficiales, IA canchera, fósforos y multijugador online.
+          Reglas oficiales, IA canchera, baraja española ilustrada y salas online.
         </p>
       </div>
 
       {/* Main Card */}
       <div className="bg-wood-border max-w-lg w-full rounded-3xl p-5 sm:p-7 shadow-2xl border-2 border-amber-600/50 flex flex-col gap-5">
-        {/* Mode Selector Tabs */}
+        {/* Mode Selector Tabs (Clean: AI & Online) */}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-2 block">
             Modalidad de Juego
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               onClick={() => setSelectedMode('ai')}
-              className={`p-3 rounded-2xl flex flex-col items-center gap-1.5 border font-bold text-xs transition-all ${
+              className={`p-3.5 rounded-2xl flex flex-col items-center gap-1.5 border font-bold text-xs sm:text-sm transition-all ${
                 selectedMode === 'ai'
                   ? 'bg-amber-500 text-stone-950 border-amber-300 shadow-lg scale-102'
                   : 'bg-black/30 text-stone-300 border-amber-950/60 hover:bg-black/40'
               }`}
             >
-              <Bot className="w-5 h-5" />
-              <span>vs IA</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedMode('local')}
-              className={`p-3 rounded-2xl flex flex-col items-center gap-1.5 border font-bold text-xs transition-all ${
-                selectedMode === 'local'
-                  ? 'bg-amber-500 text-stone-950 border-amber-300 shadow-lg scale-102'
-                  : 'bg-black/30 text-stone-300 border-amber-950/60 hover:bg-black/40'
-              }`}
-            >
-              <Users className="w-5 h-5" />
-              <span>2 Jugadores</span>
+              <Bot className="w-6 h-6" />
+              <span>vs IA Criolla</span>
             </button>
 
             <button
               onClick={() => setSelectedMode(selectedMode.startsWith('online') ? selectedMode : 'online_create')}
-              className={`p-3 rounded-2xl flex flex-col items-center gap-1.5 border font-bold text-xs transition-all ${
+              className={`p-3.5 rounded-2xl flex flex-col items-center gap-1.5 border font-bold text-xs sm:text-sm transition-all ${
                 selectedMode.startsWith('online')
                   ? 'bg-amber-500 text-stone-950 border-amber-300 shadow-lg scale-102'
                   : 'bg-black/30 text-stone-300 border-amber-950/60 hover:bg-black/40'
               }`}
             >
-              <Globe className="w-5 h-5" />
-              <span>Online</span>
+              <Globe className="w-6 h-6" />
+              <span>Multijugador Online</span>
             </button>
           </div>
         </div>
 
         {/* Online sub-tabs */}
         {selectedMode.startsWith('online') && (
-          <div className="flex bg-black/40 p-1 rounded-xl border border-amber-900/40">
+          <div className="flex bg-black/40 p-1 rounded-xl border border-amber-900/40 animate-speech">
             <button
               onClick={() => setSelectedMode('online_create')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                 selectedMode === 'online_create' ? 'bg-amber-500 text-stone-950 shadow' : 'text-stone-300'
               }`}
             >
@@ -162,7 +198,7 @@ export const Lobby: React.FC<LobbyProps> = ({
             </button>
             <button
               onClick={() => setSelectedMode('online_join')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                 selectedMode === 'online_join' ? 'bg-amber-500 text-stone-950 shadow' : 'text-stone-300'
               }`}
             >
@@ -186,26 +222,9 @@ export const Lobby: React.FC<LobbyProps> = ({
           />
         </div>
 
-        {/* Local 2-Player second name */}
-        {selectedMode === 'local' && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-300">
-              Nombre Jugador 2
-            </label>
-            <input
-              type="text"
-              value={player2Name}
-              onChange={(e) => setPlayer2Name(e.target.value)}
-              placeholder="Nombre Jugador 2"
-              maxLength={15}
-              className="w-full bg-black/40 border border-amber-700/60 rounded-xl px-3.5 py-2.5 text-amber-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-        )}
-
         {/* Room Code for Online Join */}
         {selectedMode === 'online_join' && (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 animate-speech">
             <label className="text-xs font-bold uppercase tracking-wider text-amber-300">
               Código de Sala (6 letras)
             </label>
@@ -231,13 +250,13 @@ export const Lobby: React.FC<LobbyProps> = ({
                 <button
                   key={dif}
                   onClick={() => setAiDifficulty(dif)}
-                  className={`py-2 px-2 rounded-xl text-xs font-extrabold capitalize border transition-all ${
+                  className={`py-2.5 px-2 rounded-xl text-xs font-extrabold capitalize border transition-all ${
                     aiDifficulty === dif
                       ? 'bg-amber-600 text-amber-50 border-amber-400 shadow-md'
                       : 'bg-black/30 text-stone-300 border-amber-950/60 hover:bg-black/40'
                   }`}
                 >
-                  {dif === 'canchero' ? '⭐ Canchero' : dif}
+                  {dif === 'canchero' ? '⭐ Canchero' : dif === 'intermedio' ? 'Gaucho' : 'Novato'}
                 </button>
               ))}
             </div>

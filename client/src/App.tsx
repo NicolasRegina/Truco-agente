@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MatchConfig, BotDifficulty, PlayerId } from '@truco/core';
-import { Lobby } from './components/Lobby';
+import { Lobby, TableTheme } from './components/Lobby';
 import { TrucoTable } from './components/TrucoTable';
 import { WaitingRoom } from './components/WaitingRoom';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -9,7 +9,10 @@ type Screen = 'lobby' | 'game';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('lobby');
-  const [gameMode, setGameMode] = useState<'ai' | 'local' | 'online'>('ai');
+  const [gameMode, setGameMode] = useState<'ai' | 'online'>('ai');
+  const [theme, setTheme] = useState<TableTheme>(() => {
+    return ((typeof localStorage !== 'undefined' && localStorage.getItem('truco_table_theme')) as TableTheme) || 'verde';
+  });
   const [config, setConfig] = useState<MatchConfig>({
     maxScore: 30,
     withFlor: false,
@@ -37,6 +40,13 @@ export const App: React.FC = () => {
     myPlayerId
   });
 
+  const handleThemeChange = (newTheme: TableTheme) => {
+    setTheme(newTheme);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('truco_table_theme', newTheme);
+    }
+  };
+
   const handleStartAiGame = (matchConfig: MatchConfig, difficulty: BotDifficulty, playerName: string) => {
     setConfig({
       ...matchConfig,
@@ -45,17 +55,6 @@ export const App: React.FC = () => {
     });
     setAiDifficulty(difficulty);
     setGameMode('ai');
-    setMyPlayerId('p1');
-    setScreen('game');
-  };
-
-  const handleStartLocalGame = (matchConfig: MatchConfig, p1Name: string, p2Name: string) => {
-    setConfig({
-      ...matchConfig,
-      p1Name,
-      p2Name
-    });
-    setGameMode('local');
     setMyPlayerId('p1');
     setScreen('game');
   };
@@ -92,9 +91,10 @@ export const App: React.FC = () => {
     return (
       <Lobby
         onStartAiGame={handleStartAiGame}
-        onStartLocalGame={handleStartLocalGame}
         onCreateOnlineRoom={handleCreateOnlineRoom}
         onJoinOnlineRoom={handleJoinOnlineRoom}
+        currentTheme={theme}
+        onThemeChange={handleThemeChange}
       />
     );
   }
@@ -111,13 +111,10 @@ export const App: React.FC = () => {
     );
   }
 
-  // In local 2-player pass-and-play mode, the active player matches the current turn player
-  const currentViewPlayerId = gameMode === 'local' ? gameState.turn : activePlayerId;
-
   return (
     <TrucoTable
       state={gameState}
-      myPlayerId={currentViewPlayerId}
+      myPlayerId={activePlayerId}
       onAction={dispatchAction}
       onNextHand={handleNextHand}
       onRestartMatch={handleRestartMatch}
@@ -125,6 +122,8 @@ export const App: React.FC = () => {
       onSendChat={handleSendChat}
       isOnlineMultiplayer={gameMode === 'online'}
       roomId={serverRoomId || onlineRoomId}
+      theme={theme}
+      onThemeChange={handleThemeChange}
     />
   );
 };
