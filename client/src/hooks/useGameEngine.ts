@@ -40,6 +40,11 @@ export function useGameEngine({
   const [isSearchingMatch, setIsSearchingMatch] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  // Sync activePlayerId with myPlayerId prop
+  useEffect(() => {
+    setActivePlayerId(myPlayerId);
+  }, [myPlayerId]);
+
   // Clean reset when switching to a new offline game
   useEffect(() => {
     if (mode === 'ai' || mode === 'local') {
@@ -122,17 +127,24 @@ export function useGameEngine({
         } else if (msg.type === 'MATCH_FOUND') {
           setIsSearchingMatch(false);
           setOnlineRoomId(msg.payload.roomId);
-          setActivePlayerId(msg.payload.playerId);
+          if (msg.payload.playerId) {
+            setActivePlayerId(msg.payload.playerId);
+          }
         } else if (msg.type === 'ROOM_CREATED') {
           setOnlineRoomId(msg.payload.roomId);
           setActivePlayerId('p1');
           setIsWaitingForOpponent(true);
         } else if (msg.type === 'ROOM_JOINED') {
           setOnlineRoomId(msg.payload.roomId);
-          setActivePlayerId(msg.payload.playerId);
+          if (msg.payload.playerId) {
+            setActivePlayerId(msg.payload.playerId);
+          }
         } else if (msg.type === 'GAME_STATE') {
           setIsSearchingMatch(false);
           setIsWaitingForOpponent(false); // Game has started!
+          if (msg.payload.yourPlayerId) {
+            setActivePlayerId(msg.payload.yourPlayerId);
+          }
           setGameState(msg.payload);
         } else if (msg.type === 'CHAT_BROADCAST') {
           setGameState((prev) => ({

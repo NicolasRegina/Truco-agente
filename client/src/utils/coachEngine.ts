@@ -17,6 +17,8 @@ export interface CoachAdvice {
 export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice | null {
   const hand = state.hands[player] || [];
   if (hand.length === 0) return null;
+  // If player's hand contains hidden placeholder cards, coach cannot advise
+  if (hand.some(c => c.id?.startsWith('hidden'))) return null;
 
   const allPlayerCards = hand.concat(state.playedCards[player] || []);
   const envidoPts = calculateEnvido(allPlayerCards);

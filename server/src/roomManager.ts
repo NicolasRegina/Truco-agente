@@ -72,6 +72,11 @@ export class RoomManager {
       const { room, token: p1Token } = this.createRoom(waiting.playerName, matchConfig, waiting.socket);
       const joinRes = this.joinRoom(room.id, playerName, socket);
 
+      (waiting.socket as any).currentRoomId = room.id;
+      (waiting.socket as any).currentRole = 'p1';
+      (socket as any).currentRoomId = room.id;
+      (socket as any).currentRole = 'p2';
+
       // Notify Player 1
       this.send(waiting.socket, {
         type: 'MATCH_FOUND',
@@ -142,6 +147,9 @@ export class RoomManager {
       spectators: []
     };
 
+    (socket as any).currentRoomId = roomId;
+    (socket as any).currentRole = 'p1';
+
     this.rooms.set(roomId, room);
     return { room, token };
   }
@@ -160,6 +168,9 @@ export class RoomManager {
         connected: true
       };
       room.lastActivity = Date.now();
+
+      (socket as any).currentRoomId = roomId;
+      (socket as any).currentRole = 'p2';
 
       // Auto start game when 2nd player joins
       room.config.p1Name = room.p1.name;
@@ -185,6 +196,9 @@ export class RoomManager {
       clearTimeout(player.disconnectTimeout);
       player.disconnectTimeout = undefined;
     }
+
+    (socket as any).currentRoomId = roomId;
+    (socket as any).currentRole = playerId;
 
     player.socket = socket;
     player.connected = true;
@@ -325,19 +339,46 @@ export class RoomManager {
     }
   }
 
+  public getSessionBySocket(socket: WebSocket): { room: GameRoom; role: PlayerId } | null {
+    // 1. Direct socket metadata
+    const metaRoomId = (socket as any).currentRoomId;
+    const metaRole = (socket as any).currentRole;
+    if (metaRoomId && metaRole) {
+      const room = this.rooms.get(metaRoomId.toUpperCase());
+      if (room) {
+        return { room, role: metaRole };
+      }
+    }
+
+    // 2. Authoritative room scan
+    for (const room of this.rooms.values()) {
+      if (room.p1.socket === socket) {
+        (socket as any).currentRoomId = room.id;
+        (socket as any).currentRole = 'p1';
+        return { room, role: 'p1' };
+      }
+      if (room.p2 && room.p2.socket === socket) {
+        (socket as any).currentRoomId = room.id;
+        (socket as any).currentRole = 'p2';
+        return { room, role: 'p2' };
+      }
+    }
+    return null;
+  }
+
   public broadcastState(room: GameRoom) {
     if (!room.gameState) return;
 
     // Send personalized state to P1 (hiding P2's hidden hand cards)
     if (room.p1.socket && room.p1.connected) {
       const p1View = this.sanitizeStateForPlayer(room.gameState, 'p1');
-      this.send(room.p1.socket, { type: 'GAME_STATE', payload: p1View });
+      this.send(room.p1.socket, { type: 'GAME_STATE', payload: { ...p1View, yourPlayerId: 'p1' } });
     }
 
     // Send personalized state to P2 (hiding P1's hidden hand cards)
     if (room.p2?.socket && room.p2.connected) {
       const p2View = this.sanitizeStateForPlayer(room.gameState, 'p2');
-      this.send(room.p2.socket, { type: 'GAME_STATE', payload: p2View });
+      this.send(room.p2.socket, { type: 'GAME_STATE', payload: { ...p2View, yourPlayerId: 'p2' } });
     }
   }
 
@@ -347,12 +388,12 @@ export class RoomManager {
 
     // Mask opponent's remaining private hand cards (send only count/placeholders unless game/hand ended)
     if (copy.phase !== 'hand_ended' && copy.phase !== 'match_ended') {
-      copy.hands[opponent] = copy.hands[opponent].map(c => ({
-        id: 'hidden_card',
-        suit: 'espada',
-        value: 1,
-        rank: 0,
-        envidoValue: 0
+      copy.hands[opponent] = copy.hands[opponent].map((c, idx) => ({
+        id: `hidden_card_${idx}`,
+        suit: 'copa',
+        value: 4,
+        rank: 14,
+        envidoValue: 4
       }));
     }
 

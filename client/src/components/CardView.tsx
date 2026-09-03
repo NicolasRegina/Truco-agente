@@ -46,7 +46,7 @@ export const CardView: React.FC<CardViewProps> = ({
   }[size];
 
   // Render card back (flipped, hidden or covered/tapada)
-  if (isFlipped || !card || card.id === 'hidden_card' || card.isCovered) {
+  if (isFlipped || !card || card.id === 'hidden_card' || card.id.startsWith('hidden') || card.isCovered) {
     return (
       <div
         className={`${sizeClasses} rounded-lg sm:rounded-xl overflow-hidden border-2 border-amber-500/80 shadow-card flex items-center justify-center relative select-none transition-all duration-200 bg-stone-900 ${className}`}

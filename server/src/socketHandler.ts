@@ -154,7 +154,8 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
         }
 
         case 'GAME_ACTION': {
-          if (!currentRoomId || !currentRole) {
+          const session = roomManager.getSessionBySocket(ws);
+          if (!session) {
             roomManager.send(ws, { type: 'ERROR', payload: { message: 'No estás en una sala activa' } });
             return;
           }
@@ -165,8 +166,8 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
             return;
           }
 
-          action.player = currentRole; // Authoritative player enforcement
-          const res = roomManager.executeAction(currentRoomId, currentRole, action);
+          action.player = session.role; // Authoritative player enforcement
+          const res = roomManager.executeAction(session.room.id, session.role, action);
 
           if (!res.success) {
             roomManager.send(ws, { type: 'ERROR', payload: { message: res.error } });
@@ -175,8 +176,9 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
         }
 
         case 'NEXT_HAND': {
-          if (!currentRoomId || !currentRole) return;
-          const res = roomManager.nextHand(currentRoomId, currentRole);
+          const session = roomManager.getSessionBySocket(ws);
+          if (!session) return;
+          const res = roomManager.nextHand(session.room.id, session.role);
           if (!res.success) {
             roomManager.send(ws, { type: 'ERROR', payload: { message: res.error } });
           }
@@ -184,12 +186,10 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
         }
 
         case 'CHAT_MESSAGE': {
-          if (!currentRoomId || !currentRole) return;
-          const room = roomManager.getRoom(currentRoomId);
-          if (room) {
-            const senderName = currentRole === 'p1' ? room.p1.name : (room.p2?.name || 'P2');
-            roomManager.broadcastChat(room, senderName, String(msg.payload?.text || ''));
-          }
+          const session = roomManager.getSessionBySocket(ws);
+          if (!session) return;
+          const senderName = session.role === 'p1' ? session.room.p1.name : (session.room.p2?.name || 'P2');
+          roomManager.broadcastChat(session.room, senderName, String(msg.payload?.text || ''));
           break;
         }
       }
