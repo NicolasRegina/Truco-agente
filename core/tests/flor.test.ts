@@ -19,19 +19,19 @@ describe('Flor Engine', () => {
     expect(hasFlor(nonFlorHand)).toBe(false);
   });
 
-  it('calculates Flor value: sum of cards + 20', () => {
+  it('calculates Flor value: sum of the two highest cards + 20', () => {
     const florHand = [
       createCard(7, 'espada'),
       createCard(6, 'espada'),
       createCard(5, 'espada')
     ];
-    // 7 + 6 + 5 + 20 = 38
-    expect(calculateFlorValue(florHand)).toBe(38);
+    // Two highest are 7 and 6: 20 + 7 + 6 = 33
+    expect(calculateFlorValue(florHand)).toBe(33);
   });
 
   it('breaks Flor ties using Mano priority', () => {
-    const florP1 = [createCard(7, 'espada'), createCard(6, 'espada'), createCard(1, 'espada')]; // 34
-    const florP2 = [createCard(7, 'oro'), createCard(6, 'oro'), createCard(1, 'oro')]; // 34
+    const florP1 = [createCard(7, 'espada'), createCard(6, 'espada'), createCard(1, 'espada')]; // 20 + 7 + 6 = 33
+    const florP2 = [createCard(7, 'oro'), createCard(6, 'oro'), createCard(1, 'oro')]; // 20 + 7 + 6 = 33
 
     const res = compareFlor(florP1, florP2, 'p2');
     expect(res.winner).toBe('p2');

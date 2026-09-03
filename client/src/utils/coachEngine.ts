@@ -18,8 +18,9 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
   const hand = state.hands[player] || [];
   if (hand.length === 0) return null;
 
-  const envidoPts = calculateEnvido(hand);
-  const playerHasFlor = state.config.withFlor && hasFlor(hand);
+  const allPlayerCards = hand.concat(state.playedCards[player] || []);
+  const envidoPts = calculateEnvido(allPlayerCards);
+  const playerHasFlor = state.config.withFlor && hasFlor(allPlayerCards);
 
   // 1. Envido is pending (Opponent called Envido/Real Envido/Falta Envido)
   if (state.phase === 'envido_pending') {

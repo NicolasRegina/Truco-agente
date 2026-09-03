@@ -44,6 +44,25 @@ describe('Envido & Falta Envido Engine', () => {
     expect(calculateEnvido(cards)).toBe(0);
   });
 
+  it('guarantees max envido <= 7 when all suits are distinct (never 33)', () => {
+    // 7 of espada, 6 of basto, 1 of oro (3 distinct suits)
+    const cards = [
+      createCard(7, 'espada'),
+      createCard(6, 'basto'),
+      createCard(1, 'oro')
+    ];
+    expect(calculateEnvido(cards)).toBe(7);
+  });
+
+  it('handles cards with missing envidoValue or partial objects safely', () => {
+    const rawCards = [
+      { id: '7_espada', value: 7, suit: 'espada', rank: 12 } as any,
+      { id: '6_basto', value: 6, suit: 'basto', rank: 3 } as any,
+      { id: '1_oro', value: 1, suit: 'oro', rank: 8 } as any
+    ];
+    expect(calculateEnvido(rawCards)).toBe(7);
+  });
+
   it('correctly calculates Falta Envido in Malas vs Buenas', () => {
     // 30-point match, Malas (e.g. 10 to 8)
     const malasScore = { p1: 10, p2: 8 };

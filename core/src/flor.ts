@@ -3,12 +3,20 @@ import { calculateFaltaEnvidoPoints } from './envido';
 
 export function hasFlor(cards: Card[]): boolean {
   if (!cards || cards.length < 3) return false;
-  return cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
+  const s0 = cards[0]?.suit?.toString()?.toLowerCase()?.trim();
+  const s1 = cards[1]?.suit?.toString()?.toLowerCase()?.trim();
+  const s2 = cards[2]?.suit?.toString()?.toLowerCase()?.trim();
+  return Boolean(s0 && s0 === s1 && s1 === s2 && ['espada', 'basto', 'oro', 'copa'].includes(s0));
 }
 
 export function calculateFlorValue(cards: Card[]): number {
   if (!hasFlor(cards)) return 0;
-  return 20 + cards[0].envidoValue + cards[1].envidoValue + cards[2].envidoValue;
+  // Official Argentine Truco rule:
+  // "Los puntos de la Flor se cuentan de la misma manera que los tantos del Envido, sumando el valor de las dos cartas más altas."
+  const values = cards
+    .map(c => (typeof c.envidoValue === 'number' ? c.envidoValue : (c.value >= 10 ? 0 : c.value)))
+    .sort((a, b) => b - a);
+  return 20 + values[0] + values[1];
 }
 
 export interface FlorBetOutcome {

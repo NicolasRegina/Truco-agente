@@ -1,34 +1,70 @@
 import { Card, EnvidoCallType, PlayerId, ScoreState, Suit } from './types';
 
+const VALID_SUITS: Suit[] = ['espada', 'basto', 'oro', 'copa'];
+
+function getCardEnvidoVal(card: Card): number {
+  if (!card) return 0;
+  if (typeof card.envidoValue === 'number') return card.envidoValue;
+  if (typeof card.value === 'number') {
+    return card.value >= 10 ? 0 : card.value;
+  }
+  return 0;
+}
+
+function getCardSuit(card: Card): Suit | null {
+  if (!card) return null;
+  const raw = card.suit?.toString()?.toLowerCase()?.trim();
+  if (raw && VALID_SUITS.includes(raw as Suit)) {
+    return raw as Suit;
+  }
+  // Try extracting from card.id (e.g. "7_espada")
+  if (card.id && typeof card.id === 'string') {
+    const parts = card.id.split('_');
+    const possible = parts[1]?.toLowerCase()?.trim();
+    if (possible && VALID_SUITS.includes(possible as Suit)) {
+      return possible as Suit;
+    }
+  }
+  return null;
+}
+
 export function calculateEnvido(cards: Card[]): number {
   if (!cards || cards.length === 0) return 0;
-  if (cards.length === 1) return cards[0].envidoValue;
+
+  if (cards.length === 1) {
+    return getCardEnvidoVal(cards[0]);
+  }
 
   const suitsMap: Partial<Record<Suit, Card[]>> = {};
+  for (const s of VALID_SUITS) {
+    suitsMap[s] = [];
+  }
+
   for (const card of cards) {
-    if (!suitsMap[card.suit]) {
-      suitsMap[card.suit] = [];
+    const suit = getCardSuit(card);
+    if (suit) {
+      suitsMap[suit]!.push(card);
     }
-    suitsMap[card.suit]!.push(card);
   }
 
   let maxEnvido = 0;
 
   // Single card maximum (when all suits are distinct)
   for (const card of cards) {
-    if (card.envidoValue > maxEnvido) {
-      maxEnvido = card.envidoValue;
+    const val = getCardEnvidoVal(card);
+    if (val > maxEnvido) {
+      maxEnvido = val;
     }
   }
 
-  // Same suit combinations (2 or 3 cards)
-  for (const suit in suitsMap) {
-    const suitCards = suitsMap[suit as Suit]!;
+  // Same suit combinations (2 or 3 cards of the SAME valid suit)
+  for (const suit of VALID_SUITS) {
+    const suitCards = suitsMap[suit]!;
     if (suitCards.length >= 2) {
       // Find maximum pair in this suit
       for (let i = 0; i < suitCards.length; i++) {
         for (let j = i + 1; j < suitCards.length; j++) {
-          const comboVal = 20 + suitCards[i].envidoValue + suitCards[j].envidoValue;
+          const comboVal = 20 + getCardEnvidoVal(suitCards[i]) + getCardEnvidoVal(suitCards[j]);
           if (comboVal > maxEnvido) {
             maxEnvido = comboVal;
           }
