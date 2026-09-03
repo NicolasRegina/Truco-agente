@@ -125,7 +125,6 @@ export const App: React.FC = () => {
       isOnlineMultiplayer={gameMode === 'online'}
       roomId={serverRoomId || onlineRoomId}
       themeId={themeId}
-      onThemeChange={handleThemeChange}
     />
   );
 };

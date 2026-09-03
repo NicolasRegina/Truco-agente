@@ -49,7 +49,7 @@ export const CardView: React.FC<CardViewProps> = ({
   if (isFlipped || !card || card.id === 'hidden_card' || card.isCovered) {
     return (
       <div
-        className={`${sizeClasses} rounded-lg overflow-hidden border-2 border-amber-500/80 shadow-card flex items-center justify-center relative select-none transition-all duration-200 ${className}`}
+        className={`${sizeClasses} rounded-lg sm:rounded-xl overflow-hidden border-2 border-amber-500/80 shadow-card flex items-center justify-center relative select-none transition-all duration-200 bg-stone-900 ${className}`}
       >
         <img
           src={`/themes/${themeId}/card_back.jpg`}
@@ -58,7 +58,7 @@ export const CardView: React.FC<CardViewProps> = ({
             (e.target as HTMLImageElement).src = '/themes/gaucho/card_back.jpg';
           }}
           alt="Dorso de Carta"
-          className="w-full h-full object-cover scale-[1.18] rounded-lg"
+          className="w-full h-full object-cover scale-[1.15]"
         />
         {card?.isCovered && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
@@ -100,19 +100,19 @@ export const CardView: React.FC<CardViewProps> = ({
         onClick={isPlayable ? onClick : undefined}
         className={`
           ${sizeClasses}
-          rounded-lg overflow-hidden border-2
+          rounded-lg sm:rounded-xl overflow-hidden border-2
           ${isTopTrump ? 'border-amber-400 ring-2 ring-amber-400 shadow-2xl' : 'border-stone-800 shadow-card'}
           ${isTopTrump ? (isMacho ? 'card-macho' : isHembra ? 'card-hembra' : 'card-siete-oro') : ''}
           ${isPlayable ? 'cursor-pointer hover:-translate-y-3 hover:shadow-card-hover active:scale-95 transition-transform' : ''}
           ${selected ? '-translate-y-4 ring-4 ring-amber-400' : ''}
-          relative select-none transition-all duration-200
+          relative select-none transition-all duration-200 bg-[#f5ede0]
           ${className}
         `}
       >
         <img
           src={imagePath}
           alt={`${card.value} de ${card.suit}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-[1.09]"
         />
         {/* Trump Badge overlay */}
         {trumpBadge && (

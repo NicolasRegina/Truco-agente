@@ -11,7 +11,6 @@ import { ScoreBoard } from './ScoreBoard';
 import { ActionBar } from './ActionBar';
 import { ChatEmotes } from './ChatEmotes';
 import { ConfirmModal } from './ConfirmModal';
-import { ThemeStoreModal } from './ThemeStoreModal';
 import { InteractiveMate } from './InteractiveMate';
 import { FanHand } from './FanHand';
 import { ThemeId } from '../themes/types';
@@ -28,10 +27,10 @@ import {
   Mic,
   MicOff,
   EyeOff,
-  Palette,
   Flame,
   GraduationCap,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -46,7 +45,6 @@ interface TrucoTableProps {
   isOnlineMultiplayer?: boolean;
   roomId?: string;
   themeId: ThemeId;
-  onThemeChange: (themeId: ThemeId) => void;
 }
 
 export const TrucoTable: React.FC<TrucoTableProps> = ({
@@ -59,14 +57,13 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   onSendChat,
   isOnlineMultiplayer = false,
   roomId,
-  themeId,
-  onThemeChange
+  themeId
 }) => {
   const [showLogs, setShowLogs] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [voicesEnabled, setVoicesEnabled] = useState(true);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
-  const [showThemeStore, setShowThemeStore] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [coveredMode, setCoveredMode] = useState(false);
 
   // Modo Aprendiz (Coach Criollo)
@@ -216,37 +213,30 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowQuitConfirm(true)}
-            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 transition-colors shadow"
+            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 transition-colors shadow flex items-center gap-1"
             title="Abandonar y Volver al Menú"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline text-xs font-semibold text-stone-300">Salir</span>
           </button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="font-serif font-black text-xs sm:text-sm text-amber-400">TRUCO ARGENTINO</span>
-              {isOnlineMultiplayer && (
-                <span className="text-[8px] sm:text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-600/80 text-emerald-100 font-bold">
-                  Online
-                </span>
-              )}
-            </div>
-            {roomId && (
-              <span className="text-[9px] sm:text-[10px] text-amber-200 font-mono">Sala: {roomId}</span>
-            )}
-          </div>
+          {isOnlineMultiplayer && (
+            <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-emerald-700/80 text-emerald-100 font-bold border border-emerald-500/40">
+              Online {roomId ? `• ${roomId}` : ''}
+            </span>
+          )}
         </div>
 
         {/* Turn alert / Tension indicator */}
         <div className="flex items-center gap-1 sm:gap-2">
           <div
-            className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-black transition-all shadow-md flex items-center gap-1 sm:gap-1.5 ${
+            className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-black transition-all shadow-md flex items-center gap-1 sm:gap-1.5 ${
               isTensionState
                 ? 'bg-red-600 text-white ring-2 ring-red-300 animate-bounce'
                 : state.phase === 'match_ended'
                 ? 'bg-amber-500 text-stone-950 ring-2 ring-amber-300'
                 : isMyTurn
                 ? 'bg-amber-500 text-stone-950 ring-2 ring-amber-300 animate-pulse'
-                : 'bg-stone-800 text-stone-300'
+                : 'bg-stone-800/90 text-stone-300 border border-stone-700'
             }`}
           >
             {isTensionState && <Flame className="w-3 h-3 fill-current" />}
@@ -265,50 +255,25 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
 
         {/* Header Action icons */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Modo Aprendiz Toggle Button */}
-          <button
-            onClick={toggleCoachMode}
-            className={`p-1.5 sm:p-2 rounded-xl transition-all shadow flex items-center gap-1 ${
-              coachMode
-                ? 'bg-amber-500 text-stone-950 ring-2 ring-amber-300 font-bold'
-                : 'bg-stone-800/80 text-stone-400 hover:text-amber-200'
-            }`}
-            title={coachMode ? 'Modo Aprendiz Activado' : 'Activar Modo Aprendiz'}
-          >
-            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden md:inline text-xs">Aprendiz</span>
-          </button>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {coachMode && (
+            <button
+              onClick={toggleCoachMode}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs ring-2 ring-amber-300 shadow"
+              title="Modo Aprendiz Activado (click para desactivar)"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Aprendiz</span>
+            </button>
+          )}
 
+          {/* Settings Gear Button (Tuerquita) */}
           <button
-            onClick={() => setShowThemeStore(true)}
-            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 transition-colors shadow"
-            title="Temas y Skins"
+            onClick={() => setShowSettings(true)}
+            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 hover:text-amber-100 transition-colors shadow border border-amber-900/40"
+            title="Ajustes y Opciones"
           >
-            <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <button
-            onClick={toggleVoices}
-            className={`p-1.5 sm:p-2 rounded-xl transition-colors shadow ${
-              voicesEnabled ? 'bg-amber-900/60 text-amber-300' : 'bg-stone-800 text-stone-400'
-            }`}
-            title={voicesEnabled ? 'Voces activadas' : 'Voces silenciadas'}
-          >
-            {voicesEnabled ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />}
-          </button>
-          <button
-            onClick={toggleSound}
-            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 shadow"
-            title="Efectos de Sonido"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />}
-          </button>
-          <button
-            onClick={() => setShowLogs(!showLogs)}
-            className="p-1.5 sm:p-2 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-amber-200 shadow"
-            title="Historial de cantos"
-          >
-            <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </header>
@@ -508,13 +473,13 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           />
         </div>
 
-        {/* Left Side: Interactive Criollo Mate (Positioned above action bar on mobile) */}
-        <div className="absolute bottom-20 sm:bottom-4 left-2 sm:left-4 z-30 scale-85 sm:scale-100 origin-bottom-left">
+        {/* Left Side: Interactive Criollo Mate (Desktop only to prevent visual spam on mobile) */}
+        <div className="hidden sm:block absolute bottom-4 left-4 z-30 scale-90 sm:scale-100 origin-bottom-left">
           <InteractiveMate />
         </div>
 
-        {/* Right Side: Emote Wheel Button (Positioned above action bar on mobile) */}
-        <div className="absolute bottom-20 sm:bottom-4 right-2 sm:right-4 z-30 scale-85 sm:scale-100 origin-bottom-right">
+        {/* Right Side: Emote Wheel Button (Desktop only to prevent visual spam on mobile) */}
+        <div className="hidden sm:block absolute bottom-4 right-4 z-30 scale-90 sm:scale-100 origin-bottom-right">
           <ChatEmotes onSendMessage={onSendChat} />
         </div>
       </main>
@@ -618,15 +583,116 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         />
       )}
 
-      {/* Theme Store Modal */}
-      {showThemeStore && (
-        <ThemeStoreModal
-          currentThemeId={themeId}
-          onSelectTheme={(id) => {
-            onThemeChange(id);
-          }}
-          onClose={() => setShowThemeStore(false)}
-        />
+      {/* Settings Gear Modal (Tuerquita) */}
+      {showSettings && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-speech">
+          <div className="bg-stone-950/95 border-2 border-amber-500/50 rounded-3xl max-w-xs sm:max-w-sm w-full p-5 sm:p-6 shadow-2xl text-amber-100">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-amber-900/60">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base sm:text-lg font-black font-serif text-amber-300">Configuración</h3>
+              </div>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="p-1 text-stone-400 hover:text-white rounded-lg hover:bg-stone-800 transition-colors"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 text-xs sm:text-sm">
+              {/* Modo Aprendiz */}
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-900/80 border border-stone-800">
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl ${coachMode ? 'bg-amber-500 text-stone-950' : 'bg-stone-800 text-stone-400'}`}>
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-stone-200">Modo Aprendiz</div>
+                    <div className="text-[10px] text-stone-400">Consejos y tácticas en vivo</div>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleCoachMode}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${coachMode ? 'bg-amber-500' : 'bg-stone-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-stone-950 absolute top-1 transition-transform ${coachMode ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Voces y Relatos */}
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-900/80 border border-stone-800">
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl ${voicesEnabled ? 'bg-amber-500 text-stone-950' : 'bg-stone-800 text-stone-400'}`}>
+                    {voicesEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-stone-200">Voces y Relatos</div>
+                    <div className="text-[10px] text-stone-400">Locución criolla de cantos</div>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleVoices}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${voicesEnabled ? 'bg-amber-500' : 'bg-stone-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-stone-950 absolute top-1 transition-transform ${voicesEnabled ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Efectos de Sonido */}
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-900/80 border border-stone-800">
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl ${soundEnabled ? 'bg-amber-500 text-stone-950' : 'bg-stone-800 text-stone-400'}`}>
+                    {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-stone-200">Efectos de Sonido</div>
+                    <div className="text-[10px] text-stone-400">Golpes de carta y tantos</div>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleSound}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${soundEnabled ? 'bg-amber-500' : 'bg-stone-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-stone-950 absolute top-1 transition-transform ${soundEnabled ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Ver Historial de Cantos */}
+              <button
+                onClick={() => {
+                  setShowSettings(false);
+                  setShowLogs(true);
+                }}
+                className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-900/80 border border-stone-800 hover:border-amber-500/40 text-left transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-stone-800 text-amber-300">
+                    <ScrollText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-stone-200">Historial de Cantos</div>
+                    <div className="text-[10px] text-stone-400">Ver registro de la partida</div>
+                  </div>
+                </div>
+                <span className="text-amber-400 font-bold text-xs">Abrir</span>
+              </button>
+
+              {/* Abandonar partida */}
+              <button
+                onClick={() => {
+                  setShowSettings(false);
+                  setShowQuitConfirm(true);
+                }}
+                className="mt-1 w-full py-2.5 px-3 rounded-2xl bg-red-950/50 hover:bg-red-900/60 border border-red-800/60 text-red-300 text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Abandonar Partida</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
