@@ -15,7 +15,21 @@ html, body, #root {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  background-color: #081c15;
+  background-color: #0a0503;
+}
+
+/* Crisp image rendering for high-resolution card illustrations on desktop */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+}
+
+.card-img-crisp {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Safe Area Insets for iOS Notch, Dynamic Island, and Home Bar */

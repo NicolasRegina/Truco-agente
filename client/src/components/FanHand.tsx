@@ -59,14 +59,16 @@ export const FanHand: React.FC<FanHandProps> = ({
             key={card.id}
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
-            className="transition-all duration-200 ease-out relative"
+            className="transition-all duration-200 ease-out relative transform-gpu will-change-transform"
             style={{
               transform: isHovered
                 ? `translate(${geom.translateX}px, -20px) scale(1.1) rotate(0deg)`
                 : isRecommended
                 ? `translate(${geom.translateX}px, ${geom.translateY - 8}px) scale(1.04) rotate(${geom.rotate}deg)`
                 : `translate(${geom.translateX}px, ${geom.translateY}px) rotate(${geom.rotate}deg)`,
-              zIndex: isHovered ? 30 : isRecommended ? 25 : idx + 10
+              zIndex: isHovered ? 30 : isRecommended ? 25 : idx + 10,
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden'
             }}
           >
             {/* Coach Sparkle Tag on Recommended Card */}

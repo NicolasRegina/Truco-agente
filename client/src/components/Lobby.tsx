@@ -102,25 +102,18 @@ export const Lobby: React.FC<LobbyProps> = ({
   return (
     <div
       style={{
+        backgroundColor: '#0a0503',
         backgroundImage: 'radial-gradient(ellipse at 50% 18%, rgba(35, 18, 5, 0.65), rgba(8, 4, 2, 0.95)), url(/themes/gaucho/table_bg.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
-      className="min-h-[100dvh] flex flex-col items-center justify-between p-3 sm:p-6 overflow-y-auto relative text-amber-100 pt-[max(env(safe-area-inset-top,0px),12px)] pb-[max(env(safe-area-inset-bottom,0px),16px)] selection:bg-amber-500 selection:text-stone-950"
+      className="w-full min-h-[100dvh] flex flex-col items-center justify-between p-3 sm:p-6 overflow-y-auto relative text-amber-100 pt-[max(env(safe-area-inset-top,0px),12px)] pb-[max(env(safe-area-inset-bottom,0px),16px)] selection:bg-amber-500 selection:text-stone-950 bg-[#0a0503]"
     >
       {/* Overhead Tavern Ambient Spotlight */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/12 blur-[130px] pointer-events-none rounded-full"></div>
 
       {/* Top Utility Header Bar */}
-      <header className="w-full max-w-lg flex items-center justify-between z-20 mb-1 sm:mb-2 px-1">
-        {/* Heraldic Sol de Mayo Seal Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-950/80 border border-amber-500/50 shadow-lg text-[10px] sm:text-[11px] font-black text-amber-300 tracking-wider backdrop-blur-md">
-          <span className="text-amber-400">☀️</span>
-          <span>TRUCO CRIOLLO</span>
-          <span className="text-stone-500">•</span>
-          <span className="text-stone-400 font-mono text-[9px] sm:text-[10px]">ARGENTINA</span>
-        </div>
-
+      <header className="w-full max-w-lg flex items-center justify-end z-20 mb-1 sm:mb-2 px-1">
         {/* Stats Button */}
         <button
           onClick={() => {

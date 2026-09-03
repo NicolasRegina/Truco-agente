@@ -58,7 +58,7 @@ export const CardView: React.FC<CardViewProps> = ({
             (e.target as HTMLImageElement).src = '/themes/gaucho/card_back.jpg';
           }}
           alt="Dorso de Carta"
-          className="w-full h-full object-cover scale-[1.15]"
+          className="w-full h-full object-cover scale-[1.12] card-img-crisp pointer-events-none select-none"
         />
         {card?.isCovered && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
@@ -100,7 +100,7 @@ export const CardView: React.FC<CardViewProps> = ({
         onClick={isPlayable ? onClick : undefined}
         className={`
           ${sizeClasses}
-          rounded-lg sm:rounded-xl overflow-hidden border-2
+          rounded-lg sm:rounded-xl overflow-hidden border-2 transform-gpu
           ${isTopTrump ? 'border-amber-400 ring-2 ring-amber-400 shadow-2xl' : 'border-stone-800 shadow-card'}
           ${isTopTrump ? (isMacho ? 'card-macho' : isHembra ? 'card-hembra' : 'card-siete-oro') : ''}
           ${isPlayable ? 'cursor-pointer hover:-translate-y-3 hover:shadow-card-hover active:scale-95 transition-transform' : ''}
@@ -112,7 +112,7 @@ export const CardView: React.FC<CardViewProps> = ({
         <img
           src={imagePath}
           alt={`${card.value} de ${card.suit}`}
-          className="w-full h-full object-cover scale-[1.09]"
+          className="w-full h-full object-cover scale-[1.07] card-img-crisp pointer-events-none select-none"
         />
         {/* Trump Badge overlay */}
         {trumpBadge && (
