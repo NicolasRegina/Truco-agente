@@ -4,7 +4,6 @@ import {
   Bot,
   Globe,
   Play,
-  Sparkles,
   Trophy,
   GraduationCap,
   Zap,
@@ -122,75 +121,27 @@ export const Lobby: React.FC<LobbyProps> = ({
           <span className="text-stone-400 font-mono text-[9px] sm:text-[10px]">ARGENTINA</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Deck Badge */}
-          <div
-            className="px-2.5 py-1 rounded-full bg-stone-950/80 border border-amber-900/60 text-amber-300/80 shadow flex items-center gap-1.5 text-[11px] font-bold select-none cursor-default backdrop-blur-md"
-            title="Baraja Española Criolla auténtica de 40 naipes"
-          >
-            <span className="text-xs">⚔️</span>
-            <span className="font-mono text-[10px] sm:text-xs">Baraja Criolla</span>
-          </div>
-
-          {/* Stats Button */}
-          <button
-            onClick={() => {
-              setStats(loadPlayerStats());
-              setShowStats(true);
-            }}
-            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
-            title="Ver estadísticas y récords"
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-mono text-[10px] sm:text-xs">Récords</span>
-          </button>
-        </div>
+        {/* Stats Button */}
+        <button
+          onClick={() => {
+            setStats(loadPlayerStats());
+            setShowStats(true);
+          }}
+          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+          title="Ver estadísticas y récords"
+        >
+          <Trophy className="w-3.5 h-3.5 text-amber-400" />
+          <span className="font-mono text-[10px] sm:text-xs">Récords</span>
+        </button>
       </header>
 
-      {/* Hero Brand Section: Fanned Physical Criollo Trumps + Grand Title */}
-      <div className="text-center my-1 sm:my-2 max-w-lg z-10 flex flex-col items-center">
-        {/* Fanned Real Physical Criollo Cards Showcase */}
-        <div className="relative h-20 sm:h-24 w-44 sm:w-52 mb-1 sm:mb-2 flex items-center justify-center select-none group cursor-default">
-          {/* Card 1: 1 de Espada (Macho) */}
-          <div className="absolute w-14 h-20 sm:w-16 sm:h-24 rounded-lg overflow-hidden border border-amber-400/80 shadow-2xl transform -rotate-14 -translate-x-6 hover:-translate-y-2 hover:-rotate-10 transition-all duration-300 bg-stone-900 ring-1 ring-amber-500/30">
-            <img
-              src="/themes/gaucho/cards/espada_1.jpg"
-              alt="1 de Espada"
-              className="w-full h-full object-cover scale-[1.09]"
-            />
-          </div>
-
-          {/* Card 3: 1 de Basto (Hembra) */}
-          <div className="absolute w-14 h-20 sm:w-16 sm:h-24 rounded-lg overflow-hidden border border-amber-400/80 shadow-2xl transform rotate-14 translate-x-6 hover:-translate-y-2 hover:rotate-10 transition-all duration-300 bg-stone-900 ring-1 ring-amber-500/30">
-            <img
-              src="/themes/gaucho/cards/basto_1.jpg"
-              alt="1 de Basto"
-              className="w-full h-full object-cover scale-[1.09]"
-            />
-          </div>
-
-          {/* Card 2: 7 de Espada (Siete Bravo) in the Center */}
-          <div className="absolute w-14 h-20 sm:w-16 sm:h-24 rounded-lg overflow-hidden border-2 border-amber-300 shadow-[0_10px_30px_rgba(245,158,11,0.4)] transform rotate-0 z-10 hover:-translate-y-3 transition-all duration-300 bg-stone-900 scale-105 ring-2 ring-amber-400/50">
-            <img
-              src="/themes/gaucho/cards/espada_7.jpg"
-              alt="7 de Espada"
-              className="w-full h-full object-cover scale-[1.09]"
-            />
-          </div>
-        </div>
-
-        {/* Vintage Ornament Tag */}
-        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-300/90 mb-1">
-          <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-          <span>El Gran Juego Nacional Argentino</span>
-          <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-        </div>
-
+      {/* Hero Brand Section: Grand Title */}
+      <div className="text-center my-2 sm:my-3 max-w-lg z-10 flex flex-col items-center">
         {/* Grand Chiseled Golden Title */}
         <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 tracking-tight font-serif drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
           TRUCO ARGENTINO
         </h1>
-        <p className="text-[11px] sm:text-xs text-amber-200/80 font-medium max-w-sm mt-0.5">
+        <p className="text-[11px] sm:text-xs text-amber-200/80 font-medium max-w-sm mt-1">
           Picardía, señas, mentiras criollas y tanteador tradicional
         </p>
       </div>
@@ -507,13 +458,11 @@ export const Lobby: React.FC<LobbyProps> = ({
         </button>
       </div>
 
-      {/* Atmospheric Pulpería Footer */}
-      <footer className="mt-2 text-center text-[10px] text-amber-200/50 font-medium flex items-center justify-center gap-2">
-        <span>Pulpería Criolla</span>
-        <span>•</span>
+      {/* Footer */}
+      <footer className="mt-2 text-center text-[11px] text-amber-200/60 font-medium flex items-center justify-center gap-2 select-none">
         <span>Mano a mano sin 8s ni 9s</span>
-        <span>•</span>
-        <span>Hecho en Argentina 🇦🇷</span>
+        <span className="text-amber-500/40">•</span>
+        <span>Desarrollado por <strong className="text-amber-300/90 font-semibold tracking-wide">nicosmico</strong></span>
       </footer>
 
       {/* Stats Modal */}
