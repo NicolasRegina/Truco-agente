@@ -2,6 +2,7 @@ class SoundController {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
   public voicesEnabled: boolean = true;
+  public musicEnabled: boolean = false;
   private selectedVoice: SpeechSynthesisVoice | null = null;
 
   constructor() {
@@ -26,10 +27,8 @@ class SoundController {
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        // Prioritize natural / neural Argentine, Latin American, or Spanish voices
         const spanishVoices = voices.filter(v => v.lang.startsWith('es') || v.lang.includes('ES') || v.lang.includes('AR'));
 
-        // Rank by best natural sound
         const bestVoice =
           spanishVoices.find(v => v.lang === 'es-AR' && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Neural'))) ||
           spanishVoices.find(v => v.lang === 'es-AR') ||
@@ -54,9 +53,8 @@ class SoundController {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     try {
-      window.speechSynthesis.cancel(); // Stop ongoing speech immediately
+      window.speechSynthesis.cancel();
 
-      // Robust emoji and special character remover regex
       const cleanText = phrase
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/gu, '')
         .replace(/[¡!¿?*#_]/g, ' ')
@@ -66,7 +64,7 @@ class SoundController {
       if (!cleanText) return;
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.1; // Balanced quick conversational speed
+      utterance.rate = 1.1;
       utterance.pitch = 1.0;
 
       if (this.selectedVoice) {
@@ -126,17 +124,90 @@ class SoundController {
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.14);
 
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.12);
+    osc.stop(now + 0.14);
+  }
+
+  public playCardSlam() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate([40, 20, 60]);
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // Sub-bass table thud
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.2);
+    gain.gain.setValueAtTime(0.8, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+
+  public playMateSlurp() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate([30, 40, 80]);
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // Liquid bubbling slurp noise simulation
+    for (let i = 0; i < 4; i++) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300 + Math.random() * 400, now + i * 0.08);
+      osc.frequency.exponentialRampToValueAtTime(600 + Math.random() * 200, now + i * 0.08 + 0.06);
+
+      gain.gain.setValueAtTime(0.15, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.06);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.06);
+    }
+  }
+
+  public playTensionPulse() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate([100, 50, 150]);
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + 0.35);
+
+    gain.gain.setValueAtTime(0.9, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
   }
 
   public playScoreTally() {

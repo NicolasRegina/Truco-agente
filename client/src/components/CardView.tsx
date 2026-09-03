@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardValue } from '@truco/core';
 import { ThemeId } from '../themes/types';
 import { getTheme } from '../themes/themeRegistry';
+import { SpanishCardRenderer } from './SpanishCardRenderer';
 
 interface CardViewProps {
   card?: Card;
@@ -13,6 +14,16 @@ interface CardViewProps {
   selected?: boolean;
   themeId?: ThemeId;
 }
+
+// Registry of available illustrated card images by theme
+const THEME_CARD_IMAGES: Record<string, string[]> = {
+  gaucho: [
+    'basto_1', 'basto_2', 'basto_10', 'basto_11', 'basto_12',
+    'copa_1', 'copa_2', 'copa_10', 'copa_11', 'copa_12',
+    'espada_1', 'espada_2', 'espada_7', 'espada_10', 'espada_11', 'espada_12',
+    'oro_1', 'oro_2', 'oro_7', 'oro_10', 'oro_11', 'oro_12'
+  ]
+};
 
 export const CardView: React.FC<CardViewProps> = ({
   card,
@@ -36,11 +47,19 @@ export const CardView: React.FC<CardViewProps> = ({
   if (isFlipped || !card || card.id === 'hidden_card' || card.isCovered) {
     return (
       <div
-        className={`${sizeClasses} bg-gradient-to-br ${currentTheme.cardBack.bgClass} border-2 border-amber-400/70 shadow-card flex items-center justify-center p-1 relative overflow-hidden transition-all duration-200 ${className}`}
+        className={`${sizeClasses} rounded-lg overflow-hidden border-2 border-amber-500/80 shadow-card flex items-center justify-center relative select-none transition-all duration-200 ${className}`}
       >
-        {currentTheme.cardBack.pattern}
+        <img
+          src={`/themes/${themeId}/card_back.jpg`}
+          onError={(e) => {
+            // Fallback to default gaucho back if theme specific back doesn't exist
+            (e.target as HTMLImageElement).src = '/themes/gaucho/card_back.jpg';
+          }}
+          alt="Dorso de Carta"
+          className="w-full h-full object-cover scale-[1.18] rounded-lg"
+        />
         {card?.isCovered && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
             <span className="text-[8px] font-black text-amber-300 bg-black/90 px-2 py-0.5 rounded border border-amber-500/80 uppercase tracking-wider">
               Tapada
             </span>
@@ -67,6 +86,68 @@ export const CardView: React.FC<CardViewProps> = ({
     ? currentTheme.trumpBadges.sieteOro
     : null;
 
+  // Check if this card has an image in the theme folder: /themes/<themeId>/cards/<suit>_<val>.jpg
+  const cardKey = `${card.suit}_${card.value}`;
+  const hasThemedImage = THEME_CARD_IMAGES[themeId]?.includes(cardKey);
+
+  if (hasThemedImage) {
+    const imagePath = `/themes/${themeId}/cards/${cardKey}.jpg`;
+
+    return (
+      <div
+        onClick={isPlayable ? onClick : undefined}
+        className={`
+          ${sizeClasses}
+          rounded-lg overflow-hidden border-2
+          ${isTopTrump ? 'border-amber-400 ring-2 ring-amber-400 shadow-2xl' : 'border-stone-800 shadow-card'}
+          ${isTopTrump ? (isMacho ? 'card-macho' : isHembra ? 'card-hembra' : 'card-siete-oro') : ''}
+          ${isPlayable ? 'cursor-pointer hover:-translate-y-3 hover:shadow-card-hover active:scale-95 transition-transform' : ''}
+          ${selected ? '-translate-y-4 ring-4 ring-amber-400' : ''}
+          relative select-none transition-all duration-200
+          ${className}
+        `}
+      >
+        <img
+          src={imagePath}
+          alt={`${card.value} de ${card.suit}`}
+          className="w-full h-full object-cover"
+        />
+        {/* Trump Badge overlay */}
+        {trumpBadge && (
+          <div className="absolute top-1 right-1 z-20">
+            <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 uppercase tracking-tighter shadow-md border border-amber-600">
+              {trumpBadge}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for Gaucho theme if specific card image is not yet generated (e.g. 3, 4, 5, 6)
+  if (themeId === 'gaucho') {
+    return (
+      <div
+        onClick={isPlayable ? onClick : undefined}
+        className={`
+          ${sizeClasses}
+          ${isTopTrump ? (isMacho ? 'card-macho ring-2 ring-sky-400' : isHembra ? 'card-hembra ring-2 ring-emerald-400' : 'card-siete-oro ring-2 ring-amber-400') : ''}
+          ${isPlayable ? 'cursor-pointer hover:-translate-y-3 hover:shadow-card-hover active:scale-95 transition-transform' : ''}
+          ${selected ? '-translate-y-4 ring-4 ring-amber-400' : ''}
+          transition-all duration-200
+          ${className}
+        `}
+      >
+        <SpanishCardRenderer
+          card={card}
+          size={size}
+          trumpBadge={trumpBadge}
+        />
+      </div>
+    );
+  }
+
+  // For other themes (Scaloneta, Pixel, Noxus), render their custom vector theme engine
   const suitDef = currentTheme.suits[card.suit];
 
   return (
@@ -87,7 +168,7 @@ export const CardView: React.FC<CardViewProps> = ({
       {/* Corner indexing (Top Left) */}
       <div className="flex items-center justify-between leading-none z-10">
         <div className="flex flex-col items-center">
-          <span className="text-sm sm:text-base font-black font-sans leading-none">{card.value}</span>
+          <span className="text-sm sm:text-base font-black font-serif leading-none">{card.value}</span>
           <div className="mt-0.5">{suitDef.mini}</div>
         </div>
         {trumpBadge && (
@@ -105,7 +186,7 @@ export const CardView: React.FC<CardViewProps> = ({
       {/* Corner indexing (Bottom Right - Inverted) */}
       <div className="flex items-center justify-between rotate-180 leading-none z-10">
         <div className="flex flex-col items-center">
-          <span className="text-sm sm:text-base font-black font-sans leading-none">{card.value}</span>
+          <span className="text-sm sm:text-base font-black font-serif leading-none">{card.value}</span>
           <div className="mt-0.5">{suitDef.mini}</div>
         </div>
       </div>
@@ -113,7 +194,7 @@ export const CardView: React.FC<CardViewProps> = ({
   );
 };
 
-// Composition rendering for any theme
+// Composition rendering for other themes
 const ThemeCardComposition: React.FC<{ card: Card; size: 'sm' | 'md' | 'lg'; themeId: ThemeId }> = ({
   card,
   size,
