@@ -28,6 +28,28 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
       }
 
       switch (msg.type) {
+        case 'FIND_MATCH': {
+          const { playerName, config } = msg.payload || {};
+          const safeConfig = {
+            maxScore: config?.maxScore === 15 ? 15 : 30,
+            withFlor: Boolean(config?.withFlor),
+            p1Name: (playerName || 'Jugador 1').slice(0, 20),
+            p2Name: 'Esperando...'
+          };
+
+          const res = roomManager.findMatch(playerName, safeConfig as any, ws);
+          if (res.matched && res.room) {
+            currentRoomId = res.room.id;
+            currentRole = res.room.p2?.socket === ws ? 'p2' : 'p1';
+          }
+          break;
+        }
+
+        case 'CANCEL_MATCH': {
+          roomManager.cancelMatch(ws);
+          break;
+        }
+
         case 'CREATE_ROOM': {
           const { playerName, config } = msg.payload || {};
           const safeConfig = {

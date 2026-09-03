@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { MatchConfig, BotDifficulty, loadPlayerStats, PlayerStats } from '@truco/core';
-import { Bot, Globe, Play, Sparkles, Trophy, Palette, GraduationCap } from 'lucide-react';
+import { Bot, Globe, Play, Sparkles, Trophy, Palette, GraduationCap, Zap } from 'lucide-react';
 import { StatsModal } from './StatsModal';
-import { ThemeStoreModal } from './ThemeStoreModal';
 import { ThemeId } from '../themes/types';
 import { getTheme } from '../themes/themeRegistry';
 
-export type GameMode = 'ai' | 'online_create' | 'online_join';
+export type GameMode = 'ai' | 'public' | 'online_create' | 'online_join';
 
 interface LobbyProps {
   onStartAiGame: (config: MatchConfig, difficulty: BotDifficulty, playerName: string) => void;
+  onStartMatchmaking: (config: MatchConfig, playerName: string) => void;
   onCreateOnlineRoom: (config: MatchConfig, playerName: string) => void;
   onJoinOnlineRoom: (roomId: string, playerName: string) => void;
   currentThemeId: ThemeId;
-  onThemeChange: (themeId: ThemeId) => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
   onStartAiGame,
+  onStartMatchmaking,
   onCreateOnlineRoom,
   onJoinOnlineRoom,
-  currentThemeId,
-  onThemeChange
+  currentThemeId
 }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [playerName, setPlayerName] = useState(() => {
@@ -32,7 +31,6 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [withFlor, setWithFlor] = useState<boolean>(false);
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
   const [showStats, setShowStats] = useState(false);
-  const [showThemeStore, setShowThemeStore] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
 
   // Modo Aprendiz setting (persisted)
@@ -79,6 +77,8 @@ export const Lobby: React.FC<LobbyProps> = ({
 
     if (selectedMode === 'ai') {
       onStartAiGame(config, aiDifficulty, playerName);
+    } else if (selectedMode === 'public') {
+      onStartMatchmaking(config, playerName);
     } else if (selectedMode === 'online_create') {
       onCreateOnlineRoom(config, playerName);
     } else if (selectedMode === 'online_join') {
@@ -95,22 +95,22 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Ambient warm tavern light glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-amber-500/10 blur-[100px] pointer-events-none rounded-full"></div>
 
-      {/* Top Bar with Brand Badge, Theme & Stats buttons */}
-      <header className="w-full max-w-lg flex items-center justify-between z-20 mb-2 sm:mb-4 px-1">
+      {/* Top utility bar */}
+      <header className="w-full max-w-lg flex items-center justify-between z-10">
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/80 border border-amber-500/40 shadow-lg text-[11px] font-black text-amber-300">
           <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
           <span>EDICIÓN BODEGÓN</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowThemeStore(true)}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
-            title="Temas y Tapetes"
+          {/* Theme badge (Criollo only for now until new decks are ready) */}
+          <div
+            className="px-3 py-1 rounded-full bg-stone-900/80 border border-amber-900/50 text-amber-300/80 shadow flex items-center gap-1.5 text-xs font-bold select-none cursor-default"
+            title="Baraja Criolla oficial (Nuevos temas en preparación)"
           >
-            <Palette className="w-4 h-4 text-amber-400" />
-            <span className="hidden sm:inline font-mono">{currentTheme.badge}</span>
-          </button>
+            <Palette className="w-3.5 h-3.5 text-amber-500" />
+            <span className="font-mono">Baraja Criolla</span>
+          </div>
 
           <button
             onClick={() => {
@@ -146,39 +146,61 @@ export const Lobby: React.FC<LobbyProps> = ({
 
       {/* Main Luxury Glassmorphic Form Card */}
       <div className="w-full max-w-md bg-stone-950/85 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-amber-500/35 flex flex-col gap-3.5 sm:gap-4 z-10 relative">
-        {/* Mode Selector Tabs (Clean: AI vs Online) */}
+        {/* Mode Selector Tabs (AI vs Pública vs Privada) */}
         <div>
           <label className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300/80 mb-1.5 block">
             Modalidad de Juego
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             <button
               onClick={() => setSelectedMode('ai')}
-              className={`p-2.5 sm:p-3 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs sm:text-sm transition-all ${
+              className={`p-2 sm:p-2.5 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs sm:text-sm transition-all ${
                 selectedMode === 'ai'
                   ? 'bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-102'
                   : 'bg-stone-900/60 text-stone-300 border-amber-900/40 hover:bg-stone-800'
               }`}
             >
-              <Bot className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span>vs IA Canchera</span>
+              <Bot className="w-5 h-5" />
+              <span>vs IA</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedMode('public')}
+              className={`p-2 sm:p-2.5 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs sm:text-sm transition-all relative ${
+                selectedMode === 'public'
+                  ? 'bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-102'
+                  : 'bg-stone-900/60 text-stone-300 border-amber-900/40 hover:bg-stone-800'
+              }`}
+            >
+              <Zap className="w-5 h-5 text-amber-300" />
+              <span>Pública</span>
             </button>
 
             <button
               onClick={() => setSelectedMode(selectedMode.startsWith('online') ? selectedMode : 'online_create')}
-              className={`p-2.5 sm:p-3 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs sm:text-sm transition-all ${
+              className={`p-2 sm:p-2.5 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs sm:text-sm transition-all ${
                 selectedMode.startsWith('online')
                   ? 'bg-gradient-to-b from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-102'
                   : 'bg-stone-900/60 text-stone-300 border-amber-900/40 hover:bg-stone-800'
               }`}
             >
-              <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span>Amigos Online</span>
+              <Globe className="w-5 h-5" />
+              <span>Privada</span>
             </button>
           </div>
         </div>
 
-        {/* Online sub-tabs */}
+        {/* Public Match info banner */}
+        {selectedMode === 'public' && (
+          <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200/90 animate-speech flex items-center gap-2.5">
+            <Zap className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+            <span className="text-[11px] leading-tight">
+              <strong>Partida Pública:</strong> Entrarás a la cola de espera. En cuanto otro jugador busque rival, se emparejarán automáticamente.
+            </span>
+          </div>
+        )}
+
+        {/* Online Private sub-tabs */}
         {selectedMode.startsWith('online') && (
           <div className="flex bg-black/60 p-1 rounded-xl border border-amber-900/50 animate-speech">
             <button
@@ -195,7 +217,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 selectedMode === 'online_join' ? 'bg-amber-500 text-stone-950 shadow' : 'text-stone-300'
               }`}
             >
-              Unirse a Sala
+              Unirse con Código
             </button>
           </div>
         )}
@@ -356,8 +378,22 @@ export const Lobby: React.FC<LobbyProps> = ({
           onClick={handleStart}
           className="w-full py-3.5 px-6 mt-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 active:scale-98 text-stone-950 font-black text-base sm:text-lg rounded-2xl shadow-2xl border border-amber-200 transition-all flex items-center justify-center gap-2"
         >
-          <Play className="w-5 h-5 fill-current" />
-          <span>{selectedMode === 'online_join' ? 'Unirse a la Mesa' : 'Comenzar Partida'}</span>
+          {selectedMode === 'public' ? (
+            <>
+              <Zap className="w-5 h-5 fill-current" />
+              <span>Buscar Rival en Línea</span>
+            </>
+          ) : selectedMode === 'online_join' ? (
+            <>
+              <Play className="w-5 h-5 fill-current" />
+              <span>Unirse a la Mesa</span>
+            </>
+          ) : (
+            <>
+              <Play className="w-5 h-5 fill-current" />
+              <span>Comenzar Partida</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -369,16 +405,6 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Modals */}
       {showStats && (
         <StatsModal stats={stats} onClose={() => setShowStats(false)} />
-      )}
-
-      {showThemeStore && (
-        <ThemeStoreModal
-          currentThemeId={currentThemeId}
-          onSelectTheme={(id) => {
-            onThemeChange(id);
-          }}
-          onClose={() => setShowThemeStore(false)}
-        />
       )}
     </div>
   );

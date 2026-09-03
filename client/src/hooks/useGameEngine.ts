@@ -19,6 +19,7 @@ export interface UseGameEngineOptions {
   aiDifficulty?: BotDifficulty;
   roomId?: string;
   myPlayerId?: PlayerId;
+  isMatchmaking?: boolean;
   wsUrl?: string;
 }
 
@@ -28,6 +29,7 @@ export function useGameEngine({
   aiDifficulty = 'canchero',
   roomId,
   myPlayerId = 'p1',
+  isMatchmaking = false,
   wsUrl = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
 }: UseGameEngineOptions) {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(config));
@@ -35,6 +37,7 @@ export function useGameEngine({
   const [connected, setConnected] = useState(false);
   const [onlineRoomId, setOnlineRoomId] = useState<string | undefined>(roomId);
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
+  const [isSearchingMatch, setIsSearchingMatch] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Clean reset when switching to a new offline game
@@ -42,6 +45,7 @@ export function useGameEngine({
     if (mode === 'ai' || mode === 'local') {
       setGameState(createInitialGameState(config));
       setIsWaitingForOpponent(false);
+      setIsSearchingMatch(false);
     }
   }, [mode, config.maxScore, config.withFlor, config.p1Name, config.p2Name]);
 
@@ -72,9 +76,20 @@ export function useGameEngine({
 
     ws.onopen = () => {
       setConnected(true);
-      if (roomId) {
+      if (isMatchmaking) {
+        // Public Matchmaking Queue
+        setIsSearchingMatch(true);
+        setIsWaitingForOpponent(false);
+        ws.send(
+          JSON.stringify({
+            type: 'FIND_MATCH',
+            payload: { playerName: config.p1Name || 'Jugador 1', config }
+          })
+        );
+      } else if (roomId) {
         // Join existing room
         setIsWaitingForOpponent(false);
+        setIsSearchingMatch(false);
         ws.send(
           JSON.stringify({
             type: 'JOIN_ROOM',
@@ -82,8 +97,9 @@ export function useGameEngine({
           })
         );
       } else {
-        // Create new room (waiting for P2)
+        // Create new private room (waiting for P2)
         setIsWaitingForOpponent(true);
+        setIsSearchingMatch(false);
         ws.send(
           JSON.stringify({
             type: 'CREATE_ROOM',
@@ -100,7 +116,14 @@ export function useGameEngine({
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'ROOM_CREATED') {
+        if (msg.type === 'SEARCHING_MATCH') {
+          setIsSearchingMatch(true);
+          setIsWaitingForOpponent(false);
+        } else if (msg.type === 'MATCH_FOUND') {
+          setIsSearchingMatch(false);
+          setOnlineRoomId(msg.payload.roomId);
+          setActivePlayerId(msg.payload.playerId);
+        } else if (msg.type === 'ROOM_CREATED') {
           setOnlineRoomId(msg.payload.roomId);
           setActivePlayerId('p1');
           setIsWaitingForOpponent(true);
@@ -108,6 +131,7 @@ export function useGameEngine({
           setOnlineRoomId(msg.payload.roomId);
           setActivePlayerId(msg.payload.playerId);
         } else if (msg.type === 'GAME_STATE') {
+          setIsSearchingMatch(false);
           setIsWaitingForOpponent(false); // Game has started!
           setGameState(msg.payload);
         } else if (msg.type === 'CHAT_BROADCAST') {
@@ -125,12 +149,13 @@ export function useGameEngine({
 
     ws.onclose = () => {
       setConnected(false);
+      setIsSearchingMatch(false);
     };
 
     return () => {
       ws.close();
     };
-  }, [mode, roomId]);
+  }, [mode, roomId, isMatchmaking]);
 
   // ----------------------------------------------------
   // OFFLINE AI TURN LOGIC
@@ -208,12 +233,22 @@ export function useGameEngine({
     [mode, activePlayerId, config]
   );
 
+  // Cancel Matchmaking
+  const cancelMatchmaking = useCallback(() => {
+    if (mode === 'online' && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'CANCEL_MATCH' }));
+    }
+    setIsSearchingMatch(false);
+  }, [mode]);
+
   return {
     gameState,
     activePlayerId,
     connected,
     onlineRoomId,
     isWaitingForOpponent,
+    isSearchingMatch,
+    cancelMatchmaking,
     dispatchAction,
     handleNextHand,
     handleRestartMatch,

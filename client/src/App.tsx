@@ -3,8 +3,8 @@ import { MatchConfig, BotDifficulty, PlayerId } from '@truco/core';
 import { Lobby } from './components/Lobby';
 import { TrucoTable } from './components/TrucoTable';
 import { WaitingRoom } from './components/WaitingRoom';
+import { MatchmakingModal } from './components/MatchmakingModal';
 import { ThemeId } from './themes/types';
-import { DEFAULT_THEME_ID } from './themes/themeRegistry';
 import { useGameEngine } from './hooks/useGameEngine';
 
 type Screen = 'lobby' | 'game';
@@ -12,9 +12,9 @@ type Screen = 'lobby' | 'game';
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('lobby');
   const [gameMode, setGameMode] = useState<'ai' | 'online'>('ai');
-  const [themeId, setThemeId] = useState<ThemeId>(() => {
-    return ((typeof localStorage !== 'undefined' && localStorage.getItem('truco_theme_id')) as ThemeId) || DEFAULT_THEME_ID;
-  });
+  const [isMatchmaking, setIsMatchmaking] = useState(false);
+  // Enforce authentic gaucho criollo deck until other themes have complete 40-card illustrations
+  const [themeId] = useState<ThemeId>('gaucho');
   const [config, setConfig] = useState<MatchConfig>({
     maxScore: 30,
     withFlor: false,
@@ -30,6 +30,8 @@ export const App: React.FC = () => {
     activePlayerId,
     onlineRoomId: serverRoomId,
     isWaitingForOpponent,
+    isSearchingMatch,
+    cancelMatchmaking,
     dispatchAction,
     handleNextHand,
     handleRestartMatch,
@@ -39,15 +41,9 @@ export const App: React.FC = () => {
     config,
     aiDifficulty,
     roomId: onlineRoomId,
-    myPlayerId
+    myPlayerId,
+    isMatchmaking
   });
-
-  const handleThemeChange = (newThemeId: ThemeId) => {
-    setThemeId(newThemeId);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('truco_theme_id', newThemeId);
-    }
-  };
 
   const handleStartAiGame = (matchConfig: MatchConfig, difficulty: BotDifficulty, playerName: string) => {
     setConfig({
@@ -57,6 +53,20 @@ export const App: React.FC = () => {
     });
     setAiDifficulty(difficulty);
     setGameMode('ai');
+    setIsMatchmaking(false);
+    setMyPlayerId('p1');
+    setScreen('game');
+  };
+
+  const handleStartMatchmaking = (matchConfig: MatchConfig, playerName: string) => {
+    setConfig({
+      ...matchConfig,
+      p1Name: playerName,
+      p2Name: 'Buscando rival...'
+    });
+    setGameMode('online');
+    setIsMatchmaking(true);
+    setOnlineRoomId(undefined);
     setMyPlayerId('p1');
     setScreen('game');
   };
@@ -68,6 +78,7 @@ export const App: React.FC = () => {
       p2Name: 'Esperando rival...'
     });
     setGameMode('online');
+    setIsMatchmaking(false);
     setOnlineRoomId(undefined);
     setMyPlayerId('p1');
     setScreen('game');
@@ -79,12 +90,17 @@ export const App: React.FC = () => {
       p2Name: playerName
     }));
     setGameMode('online');
+    setIsMatchmaking(false);
     setOnlineRoomId(roomId);
     setMyPlayerId('p2');
     setScreen('game');
   };
 
   const handleBackToLobby = () => {
+    if (isMatchmaking) {
+      cancelMatchmaking();
+    }
+    setIsMatchmaking(false);
     setScreen('lobby');
     setOnlineRoomId(undefined);
   };
@@ -93,16 +109,27 @@ export const App: React.FC = () => {
     return (
       <Lobby
         onStartAiGame={handleStartAiGame}
+        onStartMatchmaking={handleStartMatchmaking}
         onCreateOnlineRoom={handleCreateOnlineRoom}
         onJoinOnlineRoom={handleJoinOnlineRoom}
         currentThemeId={themeId}
-        onThemeChange={handleThemeChange}
       />
     );
   }
 
-  // If in online mode and waiting for second player to connect, show Waiting Room screen!
-  if (gameMode === 'online' && isWaitingForOpponent) {
+  // If in online mode and searching for a public match, show MatchmakingModal!
+  if (gameMode === 'online' && isMatchmaking && (isSearchingMatch || !serverRoomId)) {
+    return (
+      <MatchmakingModal
+        playerName={config.p1Name || 'Jugador 1'}
+        config={config}
+        onCancel={handleBackToLobby}
+      />
+    );
+  }
+
+  // If in online private room and waiting for second player to connect, show Waiting Room screen!
+  if (gameMode === 'online' && !isMatchmaking && isWaitingForOpponent) {
     return (
       <WaitingRoom
         roomId={serverRoomId || onlineRoomId || '...'}

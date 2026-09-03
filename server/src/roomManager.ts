@@ -37,12 +37,90 @@ const TURN_TIMEOUT_MS = 30000; // 30s per turn
 const DISCONNECT_GRACE_MS = 30000; // 30s grace period for reconnects
 const ROOM_MAX_IDLE_MS = 1000 * 60 * 60; // 1 hour room GC
 
+export interface QueuedPlayer {
+  socket: WebSocket;
+  playerName: string;
+  config: MatchConfig;
+  joinedAt: number;
+}
+
 export class RoomManager {
   private rooms: Map<string, GameRoom> = new Map();
+  private matchmakingQueue: QueuedPlayer[] = [];
 
   constructor() {
     // Background garbage collection for inactive rooms
     setInterval(() => this.cleanupInactiveRooms(), 60000);
+  }
+
+  public findMatch(playerName: string, config: MatchConfig, socket: WebSocket): { matched: boolean; room?: GameRoom } {
+    // Clean queue of disconnected sockets
+    this.matchmakingQueue = this.matchmakingQueue.filter(
+      q => q.socket.readyState === WebSocket.OPEN && q.socket !== socket
+    );
+
+    if (this.matchmakingQueue.length > 0) {
+      const waiting = this.matchmakingQueue.shift()!;
+
+      const matchConfig: MatchConfig = {
+        maxScore: config.maxScore === 15 ? 15 : 30,
+        withFlor: Boolean(config.withFlor),
+        p1Name: waiting.playerName,
+        p2Name: (playerName || 'Jugador 2').slice(0, 20)
+      };
+
+      const { room, token: p1Token } = this.createRoom(waiting.playerName, matchConfig, waiting.socket);
+      const joinRes = this.joinRoom(room.id, playerName, socket);
+
+      // Notify Player 1
+      this.send(waiting.socket, {
+        type: 'MATCH_FOUND',
+        payload: {
+          roomId: room.id,
+          playerId: 'p1',
+          token: p1Token,
+          config: room.config,
+          p1Name: room.p1.name,
+          p2Name: joinRes?.room.p2?.name
+        }
+      });
+
+      // Notify Player 2
+      this.send(socket, {
+        type: 'MATCH_FOUND',
+        payload: {
+          roomId: room.id,
+          playerId: 'p2',
+          token: joinRes!.token,
+          config: room.config,
+          p1Name: room.p1.name,
+          p2Name: joinRes?.room.p2?.name
+        }
+      });
+
+      // Start state for both players
+      this.broadcastState(room);
+
+      return { matched: true, room };
+    } else {
+      this.matchmakingQueue.push({
+        socket,
+        playerName: (playerName || 'Jugador 1').slice(0, 20),
+        config,
+        joinedAt: Date.now()
+      });
+
+      this.send(socket, {
+        type: 'SEARCHING_MATCH',
+        payload: { message: 'Buscando rival online...' }
+      });
+
+      return { matched: false };
+    }
+  }
+
+  public cancelMatch(socket: WebSocket) {
+    this.matchmakingQueue = this.matchmakingQueue.filter(q => q.socket !== socket);
   }
 
   public createRoom(p1Name: string, config: MatchConfig, socket: WebSocket): { room: GameRoom; token: string } {
@@ -116,6 +194,7 @@ export class RoomManager {
   }
 
   public handleDisconnect(socket: WebSocket): { room?: GameRoom; player?: PlayerSession } {
+    this.cancelMatch(socket);
     for (const room of this.rooms.values()) {
       if (room.p1.socket === socket) {
         room.p1.connected = false;

@@ -3,6 +3,8 @@ import { GameAction, GameState, MatchConfig, PlayerId } from '@truco/core';
 export type ClientMessageType =
   | 'CREATE_ROOM'
   | 'JOIN_ROOM'
+  | 'FIND_MATCH'
+  | 'CANCEL_MATCH'
   | 'RECONNECT'
   | 'GAME_ACTION'
   | 'START_GAME'
@@ -42,6 +44,8 @@ export interface ClientMessage {
 export type ServerMessageType =
   | 'ROOM_CREATED'
   | 'ROOM_JOINED'
+  | 'SEARCHING_MATCH'
+  | 'MATCH_FOUND'
   | 'GAME_STATE'
   | 'PLAYER_DISCONNECTED'
   | 'PLAYER_RECONNECTED'
