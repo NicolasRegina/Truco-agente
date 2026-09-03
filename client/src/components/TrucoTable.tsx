@@ -508,13 +508,13 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           />
         </div>
 
-        {/* Bottom Left Corner: Interactive Criollo Mate */}
-        <div className="absolute bottom-2 left-2 z-30 scale-90 sm:scale-100 origin-bottom-left">
+        {/* Left Side: Interactive Criollo Mate (Positioned above action bar on mobile) */}
+        <div className="absolute bottom-20 sm:bottom-4 left-2 sm:left-4 z-30 scale-85 sm:scale-100 origin-bottom-left">
           <InteractiveMate />
         </div>
 
-        {/* Bottom Right Corner: Emote Wheel Button */}
-        <div className="absolute bottom-2 right-2 z-30 scale-90 sm:scale-100 origin-bottom-right">
+        {/* Right Side: Emote Wheel Button (Positioned above action bar on mobile) */}
+        <div className="absolute bottom-20 sm:bottom-4 right-2 sm:right-4 z-30 scale-85 sm:scale-100 origin-bottom-right">
           <ChatEmotes onSendMessage={onSendChat} />
         </div>
       </main>
