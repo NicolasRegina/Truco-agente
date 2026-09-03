@@ -16,13 +16,15 @@ interface CardViewProps {
 }
 
 // Registry of available illustrated card images by theme
+const ALL_SPANISH_CARDS = [
+  'basto_1', 'basto_2', 'basto_3', 'basto_4', 'basto_5', 'basto_6', 'basto_7', 'basto_10', 'basto_11', 'basto_12',
+  'copa_1', 'copa_2', 'copa_3', 'copa_4', 'copa_5', 'copa_6', 'copa_7', 'copa_10', 'copa_11', 'copa_12',
+  'espada_1', 'espada_2', 'espada_3', 'espada_4', 'espada_5', 'espada_6', 'espada_7', 'espada_10', 'espada_11', 'espada_12',
+  'oro_1', 'oro_2', 'oro_3', 'oro_4', 'oro_5', 'oro_6', 'oro_7', 'oro_10', 'oro_11', 'oro_12'
+];
+
 const THEME_CARD_IMAGES: Record<string, string[]> = {
-  gaucho: [
-    'basto_1', 'basto_2', 'basto_10', 'basto_11', 'basto_12',
-    'copa_1', 'copa_2', 'copa_10', 'copa_11', 'copa_12',
-    'espada_1', 'espada_2', 'espada_7', 'espada_10', 'espada_11', 'espada_12',
-    'oro_1', 'oro_2', 'oro_7', 'oro_10', 'oro_11', 'oro_12'
-  ]
+  gaucho: ALL_SPANISH_CARDS
 };
 
 export const CardView: React.FC<CardViewProps> = ({
