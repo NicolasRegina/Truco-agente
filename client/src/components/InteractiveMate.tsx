@@ -17,8 +17,10 @@ export const InteractiveMate: React.FC<InteractiveMateProps> = ({
     '🧉 ¡Unos amargos y a ganar!',
     '🧉 ¡Cebá otro mientras piensa!',
     '🧉 ¡Mate caliente, truco ardiente!',
-    '🧉 ¡Manso mate criollo!',
-    '🧉 ¡Ponele yerba que está lavado!'
+    '🧉 ¡Manso mate, amigo!',
+    '🧉 ¡Ponele yerba que está lavado!',
+    '🧉 ¡Gracias por la yerba!',
+    '🧉 ¡Salud!'
   ];
 
   const handleDrink = () => {

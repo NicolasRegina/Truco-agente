@@ -242,7 +242,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-black text-amber-300 font-headline tracking-wide">
-                Perfil & Bazar Criollo
+                Perfil & Tienda
               </h2>
               <span className="text-[11px] text-amber-200/80 flex items-center gap-1 font-mono">
                 <span>Saldo:</span>
@@ -299,7 +299,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>Bazar Criollo</span>
+            <span>Tienda</span>
           </button>
         </div>
 

@@ -30,7 +30,7 @@ export function useGameEngine({
   roomId,
   myPlayerId = 'p1',
   isMatchmaking = false,
-  wsUrl = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
+  wsUrl = import.meta.env.VITE_WS_URL || (import.meta.env.PROD ? 'wss://truquero.onrender.com' : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`)
 }: UseGameEngineOptions) {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(config));
   const [activePlayerId, setActivePlayerId] = useState<PlayerId>(myPlayerId);

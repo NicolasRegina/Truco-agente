@@ -37,7 +37,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [playerName, setPlayerName] = useState(() => {
-    return (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Nico';
+    return (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Leo Messi';
   });
   const [roomCode, setRoomCode] = useState('');
   const [maxScore, setMaxScore] = useState<15 | 30>(30);
@@ -154,10 +154,10 @@ export const Lobby: React.FC<LobbyProps> = ({
               setShowProfileModal(true);
             }}
             className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-amber-950/80 hover:bg-amber-900/90 border border-amber-500/60 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
-            title="Bazar Criollo"
+            title="Tienda"
           >
             <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[10px] sm:text-xs">Bazar</span>
+            <span className="text-[10px] sm:text-xs">Tienda</span>
           </button>
 
           <button

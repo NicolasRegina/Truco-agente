@@ -15,7 +15,7 @@ export const MISSIONS_POOL: MissionDefinition[] = [
     id: 'mesa_a_medida',
     category: 'config',
     title: 'Mesa a medida',
-    description: 'Jugá una partida personalizada (15 pts, con Flor o contra bot Canchero)',
+    description: 'Jugá una partida personalizada (15 pts, con Flor o contra el bot)',
     target: 1,
     rewardCoins: 3,
     eventKey: 'custom_game'
@@ -33,7 +33,7 @@ export const MISSIONS_POOL: MissionDefinition[] = [
     id: 'duelo_gaucho',
     category: 'config',
     title: 'Duelo Gaucho',
-    description: 'Jugá una partida en línea o contra bot Canchero',
+    description: 'Jugá una partida en línea o contra el bot',
     target: 1,
     rewardCoins: 3,
     eventKey: 'hard_or_online_match'

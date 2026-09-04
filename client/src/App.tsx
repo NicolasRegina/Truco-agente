@@ -18,8 +18,8 @@ export const App: React.FC = () => {
   const [config, setConfig] = useState<MatchConfig>({
     maxScore: 30,
     withFlor: false,
-    p1Name: 'Nico',
-    p2Name: 'Bot Canchero'
+    p1Name: 'Leo Messi',
+    p2Name: 'Rodri De Paul'
   });
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
   const [onlineRoomId, setOnlineRoomId] = useState<string | undefined>(undefined);
