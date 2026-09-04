@@ -121,3 +121,58 @@ img {
 .animate-speech {
   animation: popSpeech 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+/* DESIGN.md Components & Accessibility */
+.btn-truco-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #081c15;
+  font-family: "Public Sans", sans-serif;
+  font-weight: 800;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-truco-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.btn-truco-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn-truco-canto {
+  background-color: #0e3b24;
+  color: #ffffff;
+  font-family: "Public Sans", sans-serif;
+  font-weight: 700;
+  border: 1px solid rgba(45, 106, 79, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-truco-canto:hover {
+  background-color: #1b4332;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+}
+
+.btn-truco-fold {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  color: #ffffff;
+  font-family: "Public Sans", sans-serif;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.35);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-truco-fold:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}

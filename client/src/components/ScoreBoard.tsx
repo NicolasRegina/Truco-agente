@@ -28,7 +28,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-amber-700/50 pb-1 mb-1 sm:mb-2 px-1">
-        <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-400 font-serif flex items-center gap-1">
+        <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300 font-headline flex items-center gap-1">
           <span>🪵</span> Anotador ({maxScore} pts)
         </span>
         <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-200">

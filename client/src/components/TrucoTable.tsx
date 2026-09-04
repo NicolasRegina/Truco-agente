@@ -488,7 +488,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
       {state.phase === 'hand_ended' && !state.matchWinner && (
         <div className="absolute inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-speech">
           <div className="bg-wood-border p-5 sm:p-6 rounded-3xl max-w-sm w-full text-center text-amber-100 border border-amber-500/50 shadow-2xl">
-            <h3 className="text-xl sm:text-2xl font-black text-amber-400 mb-1 font-serif">Mano Finalizada</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-amber-400 mb-1 font-headline tracking-wide">Mano Finalizada</h3>
             <p className="text-xs sm:text-sm text-stone-200 mb-4">
               {state.handWinner === myPlayerId ? '¡Ganaste la mano!' : `La mano fue para ${oppName}`}
             </p>
@@ -512,7 +512,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
               <Trophy className="w-8 h-8 sm:w-9 sm:h-9 text-amber-400" />
             </div>
 
-            <h2 className="text-xl sm:text-3xl font-black text-amber-300 mb-1 font-serif">
+            <h2 className="text-xl sm:text-3xl font-black text-amber-300 mb-1 font-headline tracking-wide">
               {state.matchWinner === myPlayerId ? '¡FELICITACIONES, GANASTE!' : '¡PARTIDA FINALIZADA!'}
             </h2>
             <p className="text-xs sm:text-sm text-stone-300 mb-4">
@@ -590,7 +590,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-amber-900/60">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base sm:text-lg font-black font-serif text-amber-300">Configuración</h3>
+                <h3 className="text-base sm:text-lg font-black font-headline text-amber-300">Configuración</h3>
               </div>
               <button
                 onClick={() => setShowSettings(false)}

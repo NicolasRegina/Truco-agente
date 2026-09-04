@@ -131,7 +131,7 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Hero Brand Section: Grand Title */}
       <div className="text-center my-2 sm:my-3 max-w-lg z-10 flex flex-col items-center">
         {/* Grand Chiseled Golden Title */}
-        <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 tracking-tight font-serif drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+        <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 tracking-wider font-headline drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
           TRUCO ARGENTINO
         </h1>
         <p className="text-[11px] sm:text-xs text-amber-200/80 font-medium max-w-sm mt-1">
