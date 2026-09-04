@@ -16,12 +16,12 @@ const TRUCO_SAYINGS = [
   '🎯 ¡Lindo tiro!',
   '💪 ¡Esta no me la sacás!',
   '🤫 ¡Picaresca criolla!',
-  '👉👈 ¡Que lindo que está el dia!',
-  'mira que te como hermano',
-  'no te hagas el vivo',
-  'no te hagas el boludo',
-  'ay que lindo',
-  'anda pa alla bobo',
+  '✨ ¡Qué lindo que está el día!',
+  '👀 ¡Mirá que te como, hermano!',
+  '😏 ¡No te hagás el vivo!',
+  '🤦‍♂️ ¡No te hagás el boludo!',
+  '🥰 ¡Ay, qué lindo!',
+  '😠 ¡Andá pa\' allá, bobo!',
 ];
 
 export const ChatEmotes: React.FC<ChatEmotesProps> = ({ onSendMessage, disabled = false }) => {

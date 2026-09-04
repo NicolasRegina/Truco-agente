@@ -27,18 +27,46 @@ class SoundController {
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        const spanishVoices = voices.filter(v => v.lang.startsWith('es') || v.lang.includes('ES') || v.lang.includes('AR'));
+        const spanishVoices = voices.filter(
+          v => v.lang.toLowerCase().startsWith('es') || v.lang.toLowerCase().includes('es-')
+        );
 
-        const bestVoice =
-          spanishVoices.find(v => v.lang === 'es-AR' && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Neural'))) ||
-          spanishVoices.find(v => v.lang === 'es-AR') ||
-          spanishVoices.find(v => v.lang === 'es-419' && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Neural'))) ||
-          spanishVoices.find(v => v.lang === 'es-419') ||
-          spanishVoices.find(v => (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Tomas') || v.name.includes('Diego'))) ||
-          spanishVoices[0] ||
-          null;
+        if (spanishVoices.length === 0) return;
 
-        this.selectedVoice = bestVoice;
+        // Score voices to prioritize authentic Argentine / Rioplatense or high-quality Latin American voices,
+        // and deprioritize robotic or peninsular (Spain) voices that sound like Loquendo.
+        const getVoiceScore = (v: SpeechSynthesisVoice): number => {
+          const name = v.name.toLowerCase();
+          const lang = v.lang.toLowerCase().replace('_', '-');
+          let score = 0;
+
+          // 1. Argentine / Uruguayan voices (Top priority)
+          if (lang === 'es-ar' || lang === 'es-uy') score += 100;
+          if (name.includes('argentin') || name.includes('tomas') || name.includes('elena') || name.includes('mateo')) score += 60;
+
+          // 2. High-quality neural / natural / online voices
+          if (name.includes('natural') || name.includes('neural') || name.includes('online')) score += 40;
+
+          // 3. High-quality Google Latin voices (es-US, es-419)
+          if (lang === 'es-us' || lang === 'es-419') score += 35;
+          if (name.includes('google') && !lang.includes('es-es')) score += 30;
+
+          // 4. Other Latin American regional voices (Mexico, Colombia, Chile)
+          if (lang.includes('es-mx') || lang.includes('es-co') || lang.includes('es-cl')) score += 15;
+
+          // 5. Heavy penalty for peninsular Spain voices (ceceo/lisp sounds completely unnatural for Truco)
+          if (lang === 'es-es' || name.includes('spain') || name.includes('españa') || name.includes('castilian') || name.includes('helena') || name.includes('laura')) {
+            score -= 50;
+          }
+
+          // 6. Penalty for old legacy desktop synthesizers
+          if (name.includes('desktop') || name.includes('sapi')) score -= 15;
+
+          return score;
+        };
+
+        const sortedVoices = [...spanishVoices].sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
+        this.selectedVoice = sortedVoices[0] || null;
       };
 
       loadVoices();
@@ -55,17 +83,33 @@ class SoundController {
     try {
       window.speechSynthesis.cancel();
 
-      const cleanText = phrase
-        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/gu, '')
-        .replace(/[¡!¿?*#_]/g, ' ')
+      // 1. Remove player sender prefix if present (e.g. "Nicolás Regina: " or "Bot Canchero: ")
+      let cleanText = phrase.replace(/^[^:]+:\s*/, '');
+
+      // 2. Strip all Unicode emojis and pictograms so the synthesizer never reads "mate", "naipe", etc.
+      cleanText = cleanText
+        .replace(/\p{Extended_Pictographic}|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?/gu, '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/[🧉🃏⚡🤔🔥🎯💪🤫👉👈👀😏🤦‍♂️🤦✨😠🥰]/gu, '')
+        .replace(/[*#_~`]/g, '');
+
+      // 3. Argentine phonetic & prosody tuning for natural Rioplatense inflection
+      cleanText = cleanText
+        .replace(/\bmira que te como hermano\b/gi, '¡Mirá que te como, hermano!')
+        .replace(/\bno te hagas el vivo\b/gi, '¡No te hagás el vivo!')
+        .replace(/\bno te hagas el boludo\b/gi, '¡No te hagás el boludo!')
+        .replace(/\banda pa alla bobo\b/gi, "¡Andá pa' allá, bobo!")
+        .replace(/\bay que lindo\b/gi, '¡Ay, qué lindo!')
+        .replace(/\bque lindo que est[aá] el d[ií]a\b/gi, '¡Qué lindo que está el día!')
         .replace(/\s+/g, ' ')
         .trim();
 
       if (!cleanText) return;
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.1;
-      utterance.pitch = 1.0;
+      // Natural, conversational pace and grounded pitch (avoids accelerated chipmunk / Loquendo feel)
+      utterance.rate = 0.94;
+      utterance.pitch = 0.98;
 
       if (this.selectedVoice) {
         utterance.voice = this.selectedVoice;
