@@ -76,40 +76,110 @@ class SoundController {
     }
   }
 
-  public speakCanto(phrase: string) {
+  // Voice clips library (supports real recordings / celebrity clips like Messi)
+  private voiceClips: { pattern: RegExp; file: string }[] = [
+    { pattern: /and[aá]\s+pa['\s]*all[aá]\s+bobo/i, file: '/audio/messi_anda_pa_alla.mp3' },
+    { pattern: /mir[aá]\s+que\s+te\s+como/i, file: '/audio/dibu_mira_que_te_como.mp3' },
+    { pattern: /\btruco\b/i, file: '/audio/canto_truco.mp3' },
+    { pattern: /\bretruco\b/i, file: '/audio/canto_retruco.mp3' },
+    { pattern: /\bvale\s+cuatro\b/i, file: '/audio/canto_vale_cuatro.mp3' },
+    { pattern: /\b(falta\s+envido)\b/i, file: '/audio/canto_falta_envido.mp3' },
+    { pattern: /\b(real\s+envido)\b/i, file: '/audio/canto_real_envido.mp3' },
+    { pattern: /\benvido\b/i, file: '/audio/canto_envido.mp3' },
+    { pattern: /\bquiero\b/i, file: '/audio/canto_quiero.mp3' },
+    { pattern: /\bno\s+quiero\b/i, file: '/audio/canto_no_quiero.mp3' },
+  ];
+
+  private playAudioClip(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      try {
+        const audio = new Audio(url);
+        audio.volume = 0.95;
+        let resolved = false;
+
+        audio.onplay = () => {
+          if (!resolved) {
+            resolved = true;
+            resolve(true);
+          }
+        };
+
+        audio.onerror = () => {
+          if (!resolved) {
+            resolved = true;
+            resolve(false);
+          }
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              if (!resolved) {
+                resolved = true;
+                resolve(true);
+              }
+            })
+            .catch(() => {
+              if (!resolved) {
+                resolved = true;
+                resolve(false);
+              }
+            });
+        }
+      } catch {
+        resolve(false);
+      }
+    });
+  }
+
+  public async speakCanto(phrase: string) {
     if (!this.enabled || !this.voicesEnabled) return;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     try {
-      window.speechSynthesis.cancel();
-
       // 1. Remove player sender prefix if present (e.g. "Nicolás Regina: " or "Bot Canchero: ")
       let cleanText = phrase.replace(/^[^:]+:\s*/, '');
 
-      // 2. Strip all Unicode emojis and pictograms so the synthesizer never reads "mate", "naipe", etc.
+      // 2. Strip all Unicode emojis and pictograms so nothing ever reads "mate", "naipe", etc.
       cleanText = cleanText
         .replace(/\p{Extended_Pictographic}|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?/gu, '')
         .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
         .replace(/[🧉🃏⚡🤔🔥🎯💪🤫👉👈👀😏🤦‍♂️🤦✨😠🥰]/gu, '')
-        .replace(/[*#_~`]/g, '');
-
-      // 3. Argentine phonetic & prosody tuning for natural Rioplatense inflection
-      cleanText = cleanText
-        .replace(/\bmira que te como hermano\b/gi, '¡Mirá que te como, hermano!')
-        .replace(/\bno te hagas el vivo\b/gi, '¡No te hagás el vivo!')
-        .replace(/\bno te hagas el boludo\b/gi, '¡No te hagás el boludo!')
-        .replace(/\banda pa alla bobo\b/gi, "¡Andá pa' allá, bobo!")
-        .replace(/\bay que lindo\b/gi, '¡Ay, qué lindo!')
-        .replace(/\bque lindo que est[aá] el d[ií]a\b/gi, '¡Qué lindo que está el día!')
+        .replace(/[*#_~`]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 
       if (!cleanText) return;
 
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      // Natural, conversational pace and grounded pitch (avoids accelerated chipmunk / Loquendo feel)
-      utterance.rate = 0.94;
-      utterance.pitch = 0.98;
+      // 3. Check if there is an authentic recorded audio clip (e.g. Messi or Dibu)
+      const matchedClip = this.voiceClips.find(c => c.pattern.test(cleanText));
+      if (matchedClip) {
+        const played = await this.playAudioClip(matchedClip.file);
+        if (played) return; // Successfully played authentic voice recording!
+      }
+
+      // 4. Fallback to browser SpeechSynthesis if no custom audio clip is available
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      // Phonetic tuning:
+      // In Spanish, 'h' is completely silent. Some synth engines (like US or Mexican voices)
+      // mistakenly aspirate initial 'h' like in English (pronouncing "jagas").
+      // Replacing "hagas/hagás" with "agas/agás" guarantees 100% proper silent-h pronunciation.
+      let synthText = cleanText
+        .replace(/\bmira que te como hermano\b/gi, '¡Mirá que te como, hermano!')
+        .replace(/\bno te hag[aá]s el vivo\b/gi, '¡No te agás el vivo!')
+        .replace(/\bno te hag[aá]s el boludo\b/gi, '¡No te agás el boludo!')
+        .replace(/\banda pa alla bobo\b/gi, "¡Andá pa' allá, bobo!")
+        .replace(/\bay que lindo\b/gi, '¡Ay, qué lindo!')
+        .replace(/\bque lindo que est[aá] el d[ií]a\b/gi, '¡Qué lindo que está el día!')
+        .replace(/\bhag[aá]s\b/gi, 'agás')
+        .replace(/\bhagas\b/gi, 'agas');
+
+      const utterance = new SpeechSynthesisUtterance(synthText);
+      // Normal speech speed (1.0) and natural pitch
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
       if (this.selectedVoice) {
         utterance.voice = this.selectedVoice;

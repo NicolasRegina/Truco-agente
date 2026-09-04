@@ -83,16 +83,6 @@ export const CardView: React.FC<CardViewProps> = ({
   const isSieteOro = card.value === 7 && card.suit === 'oro';
   const isTopTrump = isMacho || isHembra || isSieteEspada || isSieteOro;
 
-  const trumpBadge = isMacho
-    ? currentTheme.trumpBadges.anchoEspada
-    : isHembra
-    ? currentTheme.trumpBadges.anchoBasto
-    : isSieteEspada
-    ? currentTheme.trumpBadges.sieteEspada
-    : isSieteOro
-    ? currentTheme.trumpBadges.sieteOro
-    : null;
-
   // Check if this card has an image in the theme folder: /themes/<themeId>/cards/<suit>_<val>.jpg
   const cardKey = `${card.suit}_${card.value}`;
   const hasThemedImage = THEME_CARD_IMAGES[themeId]?.includes(cardKey);
@@ -106,8 +96,7 @@ export const CardView: React.FC<CardViewProps> = ({
         className={`
           ${sizeClasses}
           rounded-lg sm:rounded-xl overflow-hidden border-2 transform-gpu
-          ${isTopTrump ? 'border-amber-400 ring-2 ring-amber-400 shadow-2xl' : 'border-stone-800 shadow-card'}
-          ${isTopTrump ? (isMacho ? 'card-macho' : isHembra ? 'card-hembra' : 'card-siete-oro') : ''}
+          ${isTopTrump ? 'border-amber-400 ring-2 ring-amber-400/80 shadow-2xl' : 'border-stone-800 shadow-card'}
           ${isPlayable ? 'cursor-pointer hover:-translate-y-3 hover:shadow-card-hover active:scale-95 transition-transform' : ''}
           ${selected ? '-translate-y-4 ring-4 ring-amber-400' : ''}
           relative select-none transition-all duration-200 bg-[#f5ede0]
@@ -119,14 +108,6 @@ export const CardView: React.FC<CardViewProps> = ({
           alt={`${card.value} de ${card.suit}`}
           className="w-full h-full object-cover scale-[1.07] card-img-crisp pointer-events-none select-none"
         />
-        {/* Trump Badge overlay */}
-        {trumpBadge && (
-          <div className="absolute top-1 right-1 z-20">
-            <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 uppercase tracking-tighter shadow-md border border-amber-600">
-              {trumpBadge}
-            </span>
-          </div>
-        )}
       </div>
     );
   }
@@ -148,7 +129,6 @@ export const CardView: React.FC<CardViewProps> = ({
         <SpanishCardRenderer
           card={card}
           size={size}
-          trumpBadge={trumpBadge}
         />
       </div>
     );
@@ -178,11 +158,6 @@ export const CardView: React.FC<CardViewProps> = ({
           <span className="text-sm sm:text-base font-black font-serif leading-none">{card.value}</span>
           <div className="mt-0.5">{suitDef.mini}</div>
         </div>
-        {trumpBadge && (
-          <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 uppercase tracking-tighter shadow-sm border border-amber-600/50">
-            {trumpBadge}
-          </span>
-        )}
       </div>
 
       {/* Center thematic illustration */}

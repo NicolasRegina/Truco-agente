@@ -5,14 +5,12 @@ interface SpanishCardRendererProps {
   card: Card;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  trumpBadge?: string | null;
 }
 
 export const SpanishCardRenderer: React.FC<SpanishCardRendererProps> = ({
   card,
   size = 'md',
   className = '',
-  trumpBadge = null
 }) => {
   const suit = card.suit;
   const value = card.value as CardValue;
@@ -52,11 +50,6 @@ export const SpanishCardRenderer: React.FC<SpanishCardRendererProps> = ({
           <span className="text-base sm:text-lg font-black font-serif text-stone-900 leading-none">{value}</span>
           <div className="mt-0.5"><SpanishMiniSuit suit={suit} /></div>
         </div>
-        {trumpBadge && (
-          <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 uppercase tracking-tighter shadow-sm border border-amber-600/50">
-            {trumpBadge}
-          </span>
-        )}
       </div>
 
       {/* Center Artwork: Figures (10, 11, 12) or Pips (1-7) */}
