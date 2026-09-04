@@ -41,6 +41,13 @@ logs/
 *.sln
 *.sw?
 
+# SQLite database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+
 # OS temp files
 .DS_Store
 Thumbs.db

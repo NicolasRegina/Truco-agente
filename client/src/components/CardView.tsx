@@ -3,6 +3,7 @@ import { Card, CardValue } from '@truco/core';
 import { ThemeId } from '../themes/types';
 import { getTheme } from '../themes/themeRegistry';
 import { SpanishCardRenderer } from './SpanishCardRenderer';
+import { profileService } from '../services/profileService';
 
 interface CardViewProps {
   card?: Card;
@@ -13,6 +14,7 @@ interface CardViewProps {
   className?: string;
   selected?: boolean;
   themeId?: ThemeId;
+  cardBackId?: string;
 }
 
 // Registry of available illustrated card images by theme
@@ -35,9 +37,12 @@ export const CardView: React.FC<CardViewProps> = ({
   size = 'md',
   className = '',
   selected = false,
-  themeId = 'gaucho'
+  themeId = 'gaucho',
+  cardBackId
 }) => {
   const currentTheme = getTheme(themeId);
+  const equippedBack = cardBackId || profileService.getCached()?.equippedCardBack || 'clasico';
+  const cardBackSrc = `/card_backs/card_${equippedBack}.jpg`;
 
   const sizeClasses = {
     sm: 'w-14 h-21 sm:w-16 sm:h-24 text-[10px] sm:text-xs rounded-md',
@@ -52,13 +57,13 @@ export const CardView: React.FC<CardViewProps> = ({
         className={`${sizeClasses} rounded-lg sm:rounded-xl overflow-hidden border-2 border-amber-500/80 shadow-card flex items-center justify-center relative select-none transition-all duration-200 bg-stone-900 ${className}`}
       >
         <img
-          src={`/themes/${themeId}/card_back.jpg`}
+          src={cardBackSrc}
           onError={(e) => {
-            // Fallback to default gaucho back if theme specific back doesn't exist
-            (e.target as HTMLImageElement).src = '/themes/gaucho/card_back.jpg';
+            // Fallback to default classic card back
+            (e.target as HTMLImageElement).src = '/card_backs/card_clasico.jpg';
           }}
           alt="Dorso de Carta"
-          className="w-full h-full object-cover scale-[1.12] card-img-crisp pointer-events-none select-none"
+          className="w-full h-full object-cover scale-[1.02] card-img-crisp pointer-events-none select-none"
         />
         {card?.isCovered && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center">

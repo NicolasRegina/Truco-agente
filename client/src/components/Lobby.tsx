@@ -9,9 +9,13 @@ import {
   Zap,
   User,
   Key,
-  Swords
+  Swords,
+  Coins,
+  ShoppingBag
 } from 'lucide-react';
 import { StatsModal } from './StatsModal';
+import { ProfileBazarModal } from './ProfileBazarModal';
+import { usePlayerProfile } from '../hooks/usePlayerProfile';
 import { ThemeId } from '../themes/types';
 
 export type GameMode = 'ai' | 'public' | 'online_create' | 'online_join';
@@ -41,6 +45,12 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
   const [showStats, setShowStats] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
+
+  // Profile & Bazar modal state
+  const profile = usePlayerProfile();
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState<'profile' | 'missions' | 'bazar'>('profile');
+  const hasClaimableMissions = profile?.missions.some(m => m.completed && !m.claimed);
 
   // Modo Aprendiz setting (persisted)
   const [coachMode, setCoachMode] = useState(() => {
@@ -113,19 +123,55 @@ export const Lobby: React.FC<LobbyProps> = ({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/12 blur-[130px] pointer-events-none rounded-full"></div>
 
       {/* Top Utility Header Bar */}
-      <header className="w-full max-w-lg flex items-center justify-end z-20 mb-1 sm:mb-2 px-1">
-        {/* Stats Button */}
+      <header className="w-full max-w-lg flex items-center justify-between z-20 mb-1 sm:mb-2 px-1">
+        {/* Profile & Coins Badge */}
         <button
           onClick={() => {
-            setStats(loadPlayerStats());
-            setShowStats(true);
+            setProfileModalTab('profile');
+            setShowProfileModal(true);
           }}
-          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
-          title="Ver estadísticas y récords"
+          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-200 shadow-xl flex items-center gap-2 text-xs font-bold transition-all active:scale-95 group relative"
+          title="Ver perfil y misiones"
         >
-          <Trophy className="w-3.5 h-3.5 text-amber-400" />
-          <span className="font-mono text-[10px] sm:text-xs">Récords</span>
+          <div className="flex items-center gap-1 font-mono text-amber-300">
+            <Coins className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            <span>{profile?.coins ?? 5}</span>
+          </div>
+          <span className="w-px h-3 bg-amber-900/80"></span>
+          <span className="truncate max-w-[90px] sm:max-w-[120px] text-amber-100 text-[10px] sm:text-xs">
+            {profile?.equippedTitle || 'Gaucho'}
+          </span>
+          {hasClaimableMissions && (
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5"></span>
+          )}
         </button>
+
+        {/* Right Buttons: Bazar & Récords */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              setProfileModalTab('bazar');
+              setShowProfileModal(true);
+            }}
+            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-amber-950/80 hover:bg-amber-900/90 border border-amber-500/60 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            title="Bazar Criollo"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-[10px] sm:text-xs">Bazar</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setStats(loadPlayerStats());
+              setShowStats(true);
+            }}
+            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            title="Ver estadísticas y récords"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span className="font-mono text-[10px] sm:text-xs">Récords</span>
+          </button>
+        </div>
       </header>
 
       {/* Hero Brand Section: Grand Title */}
@@ -461,6 +507,15 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Stats Modal */}
       {showStats && (
         <StatsModal stats={stats} onClose={() => setShowStats(false)} />
+      )}
+
+      {/* Profile & Bazar Modal */}
+      {showProfileModal && profile && (
+        <ProfileBazarModal
+          profile={profile}
+          initialTab={profileModalTab}
+          onClose={() => setShowProfileModal(false)}
+        />
       )}
     </div>
   );

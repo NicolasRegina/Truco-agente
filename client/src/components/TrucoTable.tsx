@@ -30,9 +30,12 @@ import {
   Flame,
   GraduationCap,
   X,
-  Settings
+  Settings,
+  Coins
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { usePlayerProfile } from '../hooks/usePlayerProfile';
+import { profileService } from '../services/profileService';
 
 interface TrucoTableProps {
   state: GameState;
@@ -65,6 +68,11 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [coveredMode, setCoveredMode] = useState(false);
+
+  // Player Profile & Economy Rewards
+  const profile = usePlayerProfile();
+  const [matchReward, setMatchReward] = useState<{ coinsEarned: number; capped: boolean } | null>(null);
+  const [matchRewardRecorded, setMatchRewardRecorded] = useState(false);
 
   // Modo Aprendiz (Coach Criollo)
   const [coachMode, setCoachMode] = useState(() => {
@@ -115,6 +123,40 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     state.envido.isResolved,
     state.truco.currentLevel
   ]);
+
+  // Record match result & award coins / advance missions when match ends
+  useEffect(() => {
+    if (state.matchWinner && !matchRewardRecorded) {
+      setMatchRewardRecorded(true);
+      const won = state.matchWinner === myPlayerId;
+      const events: string[] = ['play_match'];
+
+      if (state.config.maxScore === 15 || state.config.withFlor) {
+        events.push('custom_game');
+      }
+      if (isOnlineMultiplayer || oppName.includes('Canchero')) {
+        events.push('hard_or_online_match');
+      }
+      if (state.envido.history.includes('falta_envido')) {
+        events.push('accept_falta_envido');
+      }
+      if (state.envido.winner === myPlayerId) {
+        events.push('win_envido');
+      }
+      if (state.truco.currentLevel === 'retruco' || state.truco.currentLevel === 'vale_cuatro') {
+        events.push('call_retruco');
+      }
+
+      profileService.recordMatch(won, events).then((res) => {
+        if (res) {
+          setMatchReward(res);
+          if (res.coinsEarned > 0) {
+            soundFx.playScoreTally();
+          }
+        }
+      });
+    }
+  }, [state.matchWinner, matchRewardRecorded, myPlayerId, state.config, state.envido, state.truco, isOnlineMultiplayer, oppName]);
 
   // Clear advice once player plays
   const handleAction = (action: GameAction) => {
@@ -421,9 +463,20 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
 
           {/* Player info & speech */}
           <div className="flex items-center gap-2">
-            <div className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-black/60 backdrop-blur-md rounded-full border border-amber-800/50 text-[11px] sm:text-xs font-bold text-amber-200 flex items-center gap-1.5 shadow-lg">
+            <div className={`px-2.5 py-0.5 sm:px-3 sm:py-1 bg-black/60 backdrop-blur-md rounded-full border text-[11px] sm:text-xs font-bold text-amber-200 flex items-center gap-1.5 shadow-lg ${
+              profile?.equippedBorder === 'gold'
+                ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]'
+                : profile?.equippedBorder === 'silver'
+                ? 'border-slate-300 shadow-[0_0_10px_rgba(203,213,225,0.5)]'
+                : profile?.equippedBorder === 'fire'
+                ? 'border-orange-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]'
+                : 'border-amber-800/50'
+            }`}>
               <div className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-300/40"></div>
-              <span>{myName} (Tú)</span>
+              <span>{myName}</span>
+              {profile?.equippedTitle && (
+                <span className="text-[10px] text-amber-400/90 font-bold hidden sm:inline">• {profile.equippedTitle}</span>
+              )}
               {state.mano === myPlayerId && (
                 <span className="text-[9px] bg-amber-500 text-stone-950 px-1 rounded font-black">Mano</span>
               )}
@@ -475,7 +528,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
 
         {/* Left Side: Interactive Criollo Mate (Desktop only to prevent visual spam on mobile) */}
         <div className="hidden sm:block absolute bottom-4 left-4 z-30 scale-90 sm:scale-100 origin-bottom-left">
-          <InteractiveMate />
+          <InteractiveMate mateStyle={profile?.equippedMate} />
         </div>
 
         {/* Right Side: Emote Wheel Button (Desktop only to prevent visual spam on mobile) */}
@@ -515,13 +568,36 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             <h2 className="text-xl sm:text-3xl font-black text-amber-300 mb-1 font-headline tracking-wide">
               {state.matchWinner === myPlayerId ? '¡FELICITACIONES, GANASTE!' : '¡PARTIDA FINALIZADA!'}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-300 mb-4">
+            <p className="text-xs sm:text-sm text-stone-300 mb-3">
               Ganador de la mesa: <strong className="text-amber-400">{state.matchWinner === 'p1' ? state.config.p1Name || 'P1' : state.config.p2Name || 'P2'}</strong>
             </p>
 
-            <div className="flex gap-2.5 sm:gap-3 mt-4">
+            {/* Coins Earned Badge */}
+            {matchReward && (
+              <div className="mb-4 py-2 px-3.5 rounded-2xl bg-black/60 border border-amber-500/50 inline-flex flex-col items-center gap-1 shadow-inner">
+                <div className="flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400 animate-bounce" />
+                  <span className="text-xs sm:text-sm font-black text-amber-300 font-mono">
+                    +{matchReward.coinsEarned} Monedas Criollas
+                  </span>
+                </div>
+                {matchReward.capped ? (
+                  <span className="text-[10px] text-stone-400 font-medium">Tope diario alcanzado (20/20 🪙)</span>
+                ) : (
+                  <span className="text-[10px] text-amber-400/80 font-medium">
+                    {state.matchWinner === myPlayerId ? '¡Recompensa por ganar!' : 'Recompensa por jugar'}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2.5 sm:gap-3 mt-1">
               <button
-                onClick={onRestartMatch}
+                onClick={() => {
+                  setMatchRewardRecorded(false);
+                  setMatchReward(null);
+                  onRestartMatch();
+                }}
                 className="flex-1 py-3 sm:py-3.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black text-xs sm:text-base rounded-2xl shadow-xl transition-all"
               >
                 Revancha
