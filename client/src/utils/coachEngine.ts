@@ -1,6 +1,7 @@
 import {
   ActionType,
   calculateEnvido,
+  Card,
   GameState,
   hasFlor,
   PlayerId
@@ -152,6 +153,11 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
     // Sort player's cards from lowest to highest rank
     const sortedCards = [...hand].sort((a, b) => a.rank - b.rank);
 
+    const formatCardLabel = (c: Card) => {
+      const suitName = c.suit.charAt(0).toUpperCase() + c.suit.slice(1);
+      return `${c.value} de ${suitName}`;
+    };
+
     // Case B1: Player is playing SECOND in this trick (Opponent already played a card)
     if (opponentCard) {
       // Find the lowest card that beats the opponent's card
@@ -162,8 +168,8 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         return {
           recommendedCardId: winningCard.id,
           badge: 'Ganar Mano',
-          title: `Matá con el ${winningCard.value}`,
-          explanation: `Jugá tu ${winningCard.value} para superar el ${opponentCard.value} del rival con la carta más justa.`
+          title: `Matá con el ${formatCardLabel(winningCard)}`,
+          explanation: `Jugá tu ${formatCardLabel(winningCard)} para superar el ${formatCardLabel(opponentCard)} del rival con la carta más justa.`
         };
       }
 
@@ -171,7 +177,7 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         return {
           recommendedCardId: tieCard.id,
           badge: 'Pardar',
-          title: `Empardá con el ${tieCard.value}`,
+          title: `Empardá con el ${formatCardLabel(tieCard)}`,
           explanation: 'Pardar en primera beneficia a quien es mano para definir en segunda.'
         };
       }
@@ -181,8 +187,8 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
       return {
         recommendedCardId: lowestCard.id,
         badge: 'Descarte',
-        title: `Quemá el ${lowestCard.value}`,
-        explanation: `No podés matar el ${opponentCard.value}. Tirale tu carta más baja y guardate las mejores.`
+        title: `Quemá el ${formatCardLabel(lowestCard)}`,
+        explanation: `No podés matar el ${formatCardLabel(opponentCard)}. Tirale tu carta más baja y guardate las mejores.`
       };
     }
 
@@ -197,15 +203,15 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         return {
           recommendedCardId: midCard.id,
           badge: 'Salida Estratégica',
-          title: `Salí con el ${midCard.value}`,
-          explanation: `Iniciá la ronda con el ${midCard.value} para sondear al rival sin quemar tu carta más alta.`
+          title: `Salí con el ${formatCardLabel(midCard)}`,
+          explanation: `Iniciá la ronda con el ${formatCardLabel(midCard)} para sondear al rival sin quemar tu carta más alta.`
         };
       }
 
       return {
         recommendedCardId: highestCard.id,
         badge: 'Asegurar Primera',
-        title: `Salí con el ${highestCard.value}`,
+        title: `Salí con el ${formatCardLabel(highestCard)}`,
         explanation: 'En el Truco, "primera mano vale doble". Buscá ganar la primera ronda.'
       };
     }
@@ -218,7 +224,7 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         return {
           recommendedCardId: highestCard.id,
           badge: 'Definir Partida',
-          title: `¡Rematá con el ${highestCard.value}!`,
+          title: `¡Rematá con el ${formatCardLabel(highestCard)}!`,
           explanation: 'Ganaste la primera. Si ganás esta mano, te llevás todos los puntos del Truco.'
         };
       }
@@ -227,7 +233,7 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
       return {
         recommendedCardId: highestCard.id,
         badge: 'Obligado a Ganar',
-        title: `Tirá tu mejor carta (${highestCard.value})`,
+        title: `Tirá tu mejor carta (${formatCardLabel(highestCard)})`,
         explanation: 'Tenés que ganar esta ronda sí o sí para forzar la tercera mano.'
       };
     }
@@ -237,7 +243,7 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
     return {
       recommendedCardId: finalCard.id,
       badge: 'Definición Final',
-      title: `Tirá el ${finalCard.value}`,
+      title: `Tirá el ${formatCardLabel(finalCard)}`,
       explanation: '¡Todo se define acá! Tirá tu última carta con fe.'
     };
   }

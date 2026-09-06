@@ -1,5 +1,6 @@
 # Agent, Antigravity & Skills
 .agent/
+.agents/
 .gemini/
 .system_generated/
 skills/

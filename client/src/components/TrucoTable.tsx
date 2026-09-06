@@ -6,7 +6,7 @@ import {
   HandLogEntry,
   PlayerId
 } from '@truco/core';
-import { CardView } from './CardView';
+import { CardView, preloadCardImages } from './CardView';
 import { ScoreBoard } from './ScoreBoard';
 import { ActionBar } from './ActionBar';
 import { ChatEmotes } from './ChatEmotes';
@@ -79,6 +79,12 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     return localStorage.getItem('truco_coach_mode') === 'true';
   });
   const [coachAdvice, setCoachAdvice] = useState<CoachAdvice | null>(null);
+  const [isAdviceExpanded, setIsAdviceExpanded] = useState(false);
+
+  // Preload card images for instantaneous rendering without network lag
+  useEffect(() => {
+    preloadCardImages(themeId);
+  }, [themeId]);
 
   const currentTheme = getTheme(themeId);
 
@@ -101,7 +107,14 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     });
   };
 
-  // Coach advice evaluation on idle (2.2s after turn starts)
+  // Reset coach advice immediately whenever a hand, trick, or turn changes
+  useEffect(() => {
+    setCoachAdvice(null);
+    setIsAdviceExpanded(false);
+  }, [state.handNumber, state.currentTrickIndex, state.turn, state.phase]);
+
+  // Coach advice evaluation on idle (1.8s after turn starts)
+  const currentHandKey = (state.hands[myPlayerId] || []).map(c => c.id).join(',');
   useEffect(() => {
     if (!coachMode || !isMyTurn || state.phase === 'hand_ended' || state.phase === 'match_ended') {
       setCoachAdvice(null);
@@ -110,16 +123,26 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
 
     const timer = setTimeout(() => {
       const advice = getCoachAdvice(state, myPlayerId);
+      // Ensure recommended card is strictly present in player's current hand
+      if (advice && advice.recommendedCardId) {
+        const hasCard = (state.hands[myPlayerId] || []).some(c => c.id === advice.recommendedCardId);
+        if (!hasCard) {
+          setCoachAdvice(null);
+          return;
+        }
+      }
       setCoachAdvice(advice);
-    }, 2200);
+    }, 1800);
 
     return () => clearTimeout(timer);
   }, [
     coachMode,
     isMyTurn,
+    state.handNumber,
     state.phase,
     state.currentTrickIndex,
-    state.hands[myPlayerId]?.length,
+    state.turn,
+    currentHandKey,
     state.envido.isResolved,
     state.truco.currentLevel
   ]);
@@ -436,28 +459,58 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         <div className="flex flex-col items-center gap-0.5 z-10 pb-[max(env(safe-area-inset-bottom,0px),8px)]">
           {/* Coach Advice Floating Bubble / Snackbar (Modo Aprendiz) */}
           {coachAdvice && (
-            <div className="mb-1 mx-auto max-w-sm px-3 py-1.5 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95 border-2 border-amber-400 text-amber-100 rounded-2xl shadow-2xl flex items-center gap-2 text-xs animate-speech z-40 backdrop-blur-md">
-              <div className="p-1 rounded-lg bg-amber-400 text-stone-950 shrink-0 shadow">
+            <div
+              className="group relative mb-1 mx-auto max-w-[95vw] sm:max-w-md px-3 py-1.5 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95 border-2 border-amber-400 text-amber-100 rounded-2xl shadow-2xl flex items-start gap-2 text-xs animate-speech z-40 backdrop-blur-md cursor-pointer transition-all duration-200 hover:border-amber-300 select-none"
+              onClick={() => setIsAdviceExpanded(prev => !prev)}
+              title={coachAdvice.explanation}
+            >
+              <div className="p-1 rounded-lg bg-amber-400 text-stone-950 shrink-0 shadow mt-0.5">
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-amber-300 text-xs truncate">{coachAdvice.title}</span>
+
+              <div className="flex-1 min-w-0 pr-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-black text-amber-300 text-xs">{coachAdvice.title}</span>
                   <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase font-bold">
                     {coachAdvice.badge}
                   </span>
+                  <span className="text-[9px] text-amber-400/80 ml-auto font-medium hidden sm:inline">
+                    (Hover para detalle)
+                  </span>
+                  <span className="text-[9px] text-amber-400/80 ml-auto font-medium sm:hidden">
+                    {isAdviceExpanded ? '▲ Menos' : '▼ Ver todo'}
+                  </span>
                 </div>
-                <span className="text-[10px] text-stone-300 leading-tight block truncate">
+                <p className={`text-[10px] sm:text-[11px] text-stone-200 leading-snug mt-0.5 ${isAdviceExpanded ? 'break-words' : 'line-clamp-2 sm:line-clamp-1'}`}>
                   {coachAdvice.explanation}
-                </span>
+                </p>
               </div>
+
               <button
-                onClick={() => setCoachAdvice(null)}
-                className="p-1 text-stone-400 hover:text-white transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCoachAdvice(null);
+                }}
+                className="p-1 text-stone-400 hover:text-white transition-colors shrink-0 mt-0.5"
                 title="Cerrar consejo"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
+
+              {/* Desktop Hover Tooltip Box */}
+              <div className="hidden sm:group-hover:flex flex-col absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-80 max-w-[90vw] p-3 rounded-xl bg-stone-950/98 border border-amber-400 shadow-2xl text-amber-100 z-50 pointer-events-none animate-speech">
+                <div className="flex items-center gap-2 mb-1.5 border-b border-amber-500/30 pb-1">
+                  <span className="font-black text-amber-300 text-xs font-headline tracking-wide">{coachAdvice.title}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase font-bold ml-auto">
+                    {coachAdvice.badge}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-200 leading-relaxed font-sans">
+                  {coachAdvice.explanation}
+                </p>
+                {/* Arrow */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-amber-400" />
+              </div>
             </div>
           )}
 

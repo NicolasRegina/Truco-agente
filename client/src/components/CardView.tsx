@@ -29,6 +29,16 @@ const THEME_CARD_IMAGES: Record<string, string[]> = {
   gaucho: ALL_SPANISH_CARDS
 };
 
+// Preload function to pre-cache card images in browser memory
+export const preloadCardImages = (themeId: string = 'gaucho', cardKeys?: string[]) => {
+  if (typeof window === 'undefined') return;
+  const keys = cardKeys || ALL_SPANISH_CARDS;
+  keys.forEach(k => {
+    const img = new Image();
+    img.src = `/themes/${themeId}/cards/${k}.jpg`;
+  });
+};
+
 export const CardView: React.FC<CardViewProps> = ({
   card,
   isFlipped = false,
@@ -106,6 +116,8 @@ export const CardView: React.FC<CardViewProps> = ({
         <img
           src={imagePath}
           alt={`${card.value} de ${card.suit}`}
+          loading="eager"
+          decoding="async"
           className="w-full h-full object-cover scale-[1.07] card-img-crisp pointer-events-none select-none"
         />
       </div>

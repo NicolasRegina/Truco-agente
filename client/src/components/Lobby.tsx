@@ -11,11 +11,13 @@ import {
   Key,
   Swords,
   Coins,
-  ShoppingBag
+  ShoppingBag,
+  WifiOff
 } from 'lucide-react';
 import { StatsModal } from './StatsModal';
 import { ProfileBazarModal } from './ProfileBazarModal';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { ThemeId } from '../themes/types';
 
 export type GameMode = 'ai' | 'public' | 'online_create' | 'online_join';
@@ -57,6 +59,15 @@ export const Lobby: React.FC<LobbyProps> = ({
     return typeof localStorage !== 'undefined' && localStorage.getItem('truco_coach_mode') === 'true';
   });
 
+  const isOnline = useNetworkStatus();
+
+  // If player goes offline and had an online mode selected, switch to vs Bot
+  useEffect(() => {
+    if (!isOnline && selectedMode !== 'ai') {
+      setSelectedMode('ai');
+    }
+  }, [isOnline, selectedMode]);
+
   // Auto-detect invitation URL query parameter (?room=ABC123)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -85,6 +96,12 @@ export const Lobby: React.FC<LobbyProps> = ({
   };
 
   const handleStart = () => {
+    if (!isOnline && selectedMode !== 'ai') {
+      alert('Esta modalidad requiere conexión a internet. Para jugar sin conexión seleccioná el modo "vs Bot".');
+      setSelectedMode('ai');
+      return;
+    }
+
     const config: MatchConfig = {
       maxScore,
       withFlor,
@@ -185,6 +202,21 @@ export const Lobby: React.FC<LobbyProps> = ({
         </p>
       </div>
 
+      {/* Offline Mode Banner */}
+      {!isOnline && (
+        <div className="w-full max-w-md mb-2 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95 border-2 border-amber-500/60 rounded-2xl px-3.5 py-2 text-xs text-amber-200 flex items-center gap-2.5 shadow-xl z-20 animate-speech">
+          <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/40 shrink-0">
+            <WifiOff className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="font-black text-amber-300 block text-xs">Modo Sin Conexión (Offline)</span>
+            <span className="text-[10px] text-stone-300 leading-tight block">
+              Podés jugar contra el Bot con todas las cartas, sonidos e IA de forma 100% offline.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Main Luxury Wooden-Leather Form Card */}
       <div className="w-full max-w-md bg-stone-950/90 backdrop-blur-2xl rounded-3xl p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-amber-500/40 flex flex-col gap-3.5 z-10 relative ring-1 ring-amber-400/20">
         {/* Section 1: Mode Selector (Mano a mano vs Bot, Pública en Línea, Mesa Privada) */}
@@ -211,50 +243,78 @@ export const Lobby: React.FC<LobbyProps> = ({
                 <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <span className="text-[11px] sm:text-xs font-black">vs Bot</span>
-              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode === 'ai' ? 'text-stone-900' : 'text-stone-400'}`}>
-                Práctica IA
+              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode === 'ai' ? 'text-stone-900' : isOnline ? 'text-stone-400' : 'text-amber-400 font-black'}`}>
+                {isOnline ? 'Práctica IA' : '100% Offline'}
               </span>
             </button>
 
             {/* Mode 2: Partida Pública */}
             <button
-              onClick={() => setSelectedMode('public')}
+              onClick={() => {
+                if (!isOnline) {
+                  alert('El modo multijugador online requiere internet. Podés jugar sin conexión contra el Bot.');
+                  return;
+                }
+                setSelectedMode('public');
+              }}
               className={`p-2 sm:p-2.5 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs transition-all relative ${
+                !isOnline ? 'opacity-50 cursor-not-allowed' : ''
+              } ${
                 selectedMode === 'public'
                   ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 border-amber-200 shadow-[0_4px_15px_rgba(245,158,11,0.35)] scale-[1.02]'
                   : 'bg-stone-900/70 text-stone-300 border-stone-800 hover:border-amber-700/60 hover:bg-stone-800/80'
               }`}
+              title={!isOnline ? 'Requiere conexión a internet' : 'Buscar partida online rápida'}
             >
-              {/* Online pulse indicator dot */}
-              <div className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </div>
+              {isOnline ? (
+                <div className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </div>
+              ) : (
+                <span className="absolute top-1 right-1 text-[7px] px-1 py-0.2 rounded bg-stone-800 text-stone-400 font-bold border border-stone-700">
+                  Offline
+                </span>
+              )}
 
               <div className={`p-1 rounded-xl ${selectedMode === 'public' ? 'bg-stone-950/20' : 'bg-stone-800 text-amber-400'}`}>
                 <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               </div>
               <span className="text-[11px] sm:text-xs font-black">Pública</span>
-              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode === 'public' ? 'text-stone-900' : 'text-emerald-400'}`}>
-                Cola Rápida
+              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode === 'public' ? 'text-stone-900' : isOnline ? 'text-emerald-400' : 'text-stone-500'}`}>
+                {isOnline ? 'Cola Rápida' : 'Sin Internet'}
               </span>
             </button>
 
             {/* Mode 3: Mesa Privada */}
             <button
-              onClick={() => setSelectedMode(selectedMode.startsWith('online') ? selectedMode : 'online_create')}
+              onClick={() => {
+                if (!isOnline) {
+                  alert('El modo de sala privada requiere internet. Podés jugar sin conexión contra el Bot.');
+                  return;
+                }
+                setSelectedMode(selectedMode.startsWith('online') ? selectedMode : 'online_create');
+              }}
               className={`p-2 sm:p-2.5 rounded-2xl flex flex-col items-center gap-1 border font-extrabold text-xs transition-all relative ${
+                !isOnline ? 'opacity-50 cursor-not-allowed' : ''
+              } ${
                 selectedMode.startsWith('online')
                   ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 border-amber-200 shadow-[0_4px_15px_rgba(245,158,11,0.35)] scale-[1.02]'
                   : 'bg-stone-900/70 text-stone-300 border-stone-800 hover:border-amber-700/60 hover:bg-stone-800/80'
               }`}
+              title={!isOnline ? 'Requiere conexión a internet' : 'Crear o unirse a sala privada'}
             >
+              {!isOnline && (
+                <span className="absolute top-1 right-1 text-[7px] px-1 py-0.2 rounded bg-stone-800 text-stone-400 font-bold border border-stone-700">
+                  Offline
+                </span>
+              )}
               <div className={`p-1 rounded-xl ${selectedMode.startsWith('online') ? 'bg-stone-950/20' : 'bg-stone-800 text-amber-400'}`}>
                 <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <span className="text-[11px] sm:text-xs font-black">Privada</span>
-              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode.startsWith('online') ? 'text-stone-900' : 'text-stone-400'}`}>
-                Con Amigos
+              <span className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-tight ${selectedMode.startsWith('online') ? 'text-stone-900' : isOnline ? 'text-stone-400' : 'text-stone-500'}`}>
+                {isOnline ? 'Con Amigos' : 'Sin Internet'}
               </span>
             </button>
           </div>
