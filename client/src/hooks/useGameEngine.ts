@@ -26,7 +26,7 @@ export interface UseGameEngineOptions {
 export function useGameEngine({
   mode,
   config,
-  aiDifficulty = 'canchero',
+  aiDifficulty = 'medio',
   roomId,
   myPlayerId = 'p1',
   isMatchmaking = false,

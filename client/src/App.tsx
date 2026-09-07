@@ -21,7 +21,7 @@ export const App: React.FC = () => {
     p1Name: 'Leo Messi',
     p2Name: 'Rodri De Paul'
   });
-  const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
+  const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('medio');
   const [onlineRoomId, setOnlineRoomId] = useState<string | undefined>(undefined);
   const [myPlayerId, setMyPlayerId] = useState<PlayerId>('p1');
 
@@ -46,10 +46,14 @@ export const App: React.FC = () => {
   });
 
   const handleStartAiGame = (matchConfig: MatchConfig, difficulty: BotDifficulty, playerName: string) => {
+    const isDif = difficulty === 'dificil' || difficulty === 'canchero';
+    const isMed = difficulty === 'medio' || difficulty === 'intermedio';
+    const botLabel = isDif ? 'Difícil' : isMed ? 'Medio' : 'Fácil';
+
     setConfig({
       ...matchConfig,
       p1Name: playerName,
-      p2Name: `Bot ${difficulty === 'canchero' ? 'Canchero' : difficulty === 'intermedio' ? 'Gaucho' : 'Novato'}`
+      p2Name: `Bot ${botLabel}`
     });
     setAiDifficulty(difficulty);
     setGameMode('ai');

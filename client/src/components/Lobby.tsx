@@ -44,7 +44,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [roomCode, setRoomCode] = useState('');
   const [maxScore, setMaxScore] = useState<15 | 30>(30);
   const [withFlor, setWithFlor] = useState<boolean>(false);
-  const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('canchero');
+  const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('medio');
   const [showStats, setShowStats] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
 
@@ -102,12 +102,16 @@ export const Lobby: React.FC<LobbyProps> = ({
       return;
     }
 
+    const isDif = aiDifficulty === 'dificil' || aiDifficulty === 'canchero';
+    const isMed = aiDifficulty === 'medio' || aiDifficulty === 'intermedio';
+    const botLabel = isDif ? 'Difícil' : isMed ? 'Medio' : 'Fácil';
+
     const config: MatchConfig = {
       maxScore,
       withFlor,
       p1Name: playerName || 'Jugador 1',
       p2Name: selectedMode === 'ai'
-        ? `Bot ${aiDifficulty === 'canchero' ? 'Canchero' : aiDifficulty === 'intermedio' ? 'Gaucho' : 'Novato'}`
+        ? `Bot ${botLabel}`
         : 'Rival'
     };
 
@@ -401,30 +405,38 @@ export const Lobby: React.FC<LobbyProps> = ({
         {selectedMode === 'ai' && (
           <div className="animate-speech">
             <label className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300/80 mb-1 block">
-              Personalidad del Rival
+              Dificultad del Rival
             </label>
             <div className="grid grid-cols-3 gap-1.5">
-              {(['novato', 'intermedio', 'canchero'] as BotDifficulty[]).map((dif) => (
-                <button
-                  key={dif}
-                  onClick={() => setAiDifficulty(dif)}
-                  className={`py-2 px-1.5 rounded-2xl text-xs font-black border transition-all flex flex-col items-center gap-0.5 ${
-                    aiDifficulty === dif
-                      ? 'bg-gradient-to-b from-amber-600 to-amber-700 text-white border-amber-300 shadow-md ring-1 ring-amber-300 scale-[1.02]'
-                      : 'bg-stone-900/60 text-stone-300 border-stone-800 hover:border-amber-700/50 hover:bg-stone-800/80'
-                  }`}
-                >
-                  <span className="text-base sm:text-lg">
-                    {dif === 'canchero' ? '🕶️' : dif === 'intermedio' ? '🤠' : '🌱'}
-                  </span>
-                  <span className="capitalize font-black text-[11px] sm:text-xs">
-                    {dif === 'canchero' ? 'Canchero' : dif === 'intermedio' ? 'Gaucho' : 'Novato'}
-                  </span>
-                  <span className="text-[8px] text-amber-200/60 font-normal">
-                    {dif === 'canchero' ? 'Picante y bife' : dif === 'intermedio' ? 'Sereno' : 'Tranqui'}
-                  </span>
-                </button>
-              ))}
+              {(['facil', 'medio', 'dificil'] as BotDifficulty[]).map((dif) => {
+                const isSelected =
+                  aiDifficulty === dif ||
+                  (dif === 'facil' && aiDifficulty === 'novato') ||
+                  (dif === 'medio' && aiDifficulty === 'intermedio') ||
+                  (dif === 'dificil' && aiDifficulty === 'canchero');
+
+                return (
+                  <button
+                    key={dif}
+                    onClick={() => setAiDifficulty(dif)}
+                    className={`py-2 px-1.5 rounded-2xl text-xs font-black border transition-all flex flex-col items-center gap-0.5 ${
+                      isSelected
+                        ? 'bg-gradient-to-b from-amber-600 to-amber-700 text-white border-amber-300 shadow-md ring-1 ring-amber-300 scale-[1.02]'
+                        : 'bg-stone-900/60 text-stone-300 border-stone-800 hover:border-amber-700/50 hover:bg-stone-800/80'
+                    }`}
+                  >
+                    <span className="text-base sm:text-lg">
+                      {dif === 'dificil' ? '⚔️' : dif === 'medio' ? '🤠' : '🌱'}
+                    </span>
+                    <span className="capitalize font-black text-[11px] sm:text-xs">
+                      {dif === 'dificil' ? 'Difícil' : dif === 'medio' ? 'Medio' : 'Fácil'}
+                    </span>
+                    <span className="text-[8px] text-amber-200/60 font-normal">
+                      {dif === 'dificil' ? 'Picante y bife' : dif === 'medio' ? 'Sereno' : 'Tranqui'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
