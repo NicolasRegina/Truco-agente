@@ -343,9 +343,13 @@ export class ProfileService {
     `).run(newCoins, newEarnedToday, today, Date.now(), deviceToken);
 
     // 2. Advance matching daily missions
-    // Implicit events for any completed match
-    const eventsSet = new Set(matchEvents);
-    eventsSet.add('play_match');
+    // Count occurrences of each event in matchEvents
+    const eventCounts: Record<string, number> = {};
+    for (const ev of matchEvents) {
+      eventCounts[ev] = (eventCounts[ev] || 0) + 1;
+    }
+    // Implicit 'play_match' for any completed match
+    eventCounts['play_match'] = Math.max(1, eventCounts['play_match'] || 0);
 
     const rawMissions = db.prepare(`
       SELECT pm.*
@@ -355,8 +359,9 @@ export class ProfileService {
 
     for (const rm of rawMissions) {
       const def = MISSIONS_POOL.find(m => m.id === rm.mission_id);
-      if (def && eventsSet.has(def.eventKey)) {
-        const newProgress = Math.min(rm.target, rm.progress + 1);
+      if (def && eventCounts[def.eventKey]) {
+        const inc = eventCounts[def.eventKey];
+        const newProgress = Math.min(rm.target, rm.progress + inc);
         const isDone = newProgress >= rm.target ? 1 : 0;
         db.prepare(`
           UPDATE player_missions
@@ -372,6 +377,36 @@ export class ProfileService {
       coinsEarned: actualCoinsEarned,
       capped: isCapped
     };
+  }
+
+  public static recordEvent(
+    deviceToken: string,
+    eventKey: string,
+    count: number = 1
+  ): { profile: PlayerProfileDTO } {
+    this.ensurePlayer(deviceToken);
+    const today = getTodayDateString();
+
+    const rawMissions = db.prepare(`
+      SELECT pm.*
+      FROM player_missions pm
+      WHERE pm.device_token = ? AND pm.date = ? AND pm.completed = 0
+    `).all(deviceToken, today) as any[];
+
+    for (const rm of rawMissions) {
+      const def = MISSIONS_POOL.find(m => m.id === rm.mission_id);
+      if (def && def.eventKey === eventKey) {
+        const newProgress = Math.min(rm.target, rm.progress + count);
+        const isDone = newProgress >= rm.target ? 1 : 0;
+        db.prepare(`
+          UPDATE player_missions
+          SET progress = ?, completed = ?
+          WHERE device_token = ? AND date = ? AND mission_id = ?
+        `).run(newProgress, isDone, deviceToken, today, rm.mission_id);
+      }
+    }
+
+    return { profile: this.getProfile(deviceToken) };
   }
 
   public static claimMission(deviceToken: string, missionId: string): { success: boolean; profile: PlayerProfileDTO; bonusAwarded: boolean } {

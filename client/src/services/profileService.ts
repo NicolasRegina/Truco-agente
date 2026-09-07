@@ -119,6 +119,19 @@ function createDefaultFallbackProfile(deviceToken: string): PlayerProfile {
   };
 }
 
+const EVENT_TO_MISSION_ID: Record<string, string> = {
+  custom_game: 'mesa_a_medida',
+  play_match: 'encuentro_pulperia',
+  hard_or_online_match: 'duelo_gaucho',
+  win_envido: 'tanto_bravo',
+  high_envido: 'envido_primero',
+  accept_falta_envido: 'coraje_criollo',
+  call_retruco: 'retruco_al_pecho',
+  win_covered_card: 'arte_del_engano',
+  drink_mate: 'cebate_otro',
+  send_emote: 'picardia_criolla'
+};
+
 class ProfileClientService {
   private listeners: Set<ProfileListener> = new Set();
   private currentProfile: PlayerProfile;
@@ -174,6 +187,53 @@ class ProfileClientService {
     return this.currentProfile;
   }
 
+  public async recordEvent(eventKey: string, count: number = 1): Promise<void> {
+    // 1. Optimistically advance matching mission locally
+    const missionId = EVENT_TO_MISSION_ID[eventKey];
+    if (missionId && this.currentProfile.missions) {
+      let changed = false;
+      const updatedMissions = this.currentProfile.missions.map(m => {
+        if (m.id === missionId && !m.completed) {
+          changed = true;
+          const newProgress = Math.min(m.target, m.progress + count);
+          return {
+            ...m,
+            progress: newProgress,
+            completed: newProgress >= m.target
+          };
+        }
+        return m;
+      });
+      if (changed) {
+        this.setAndBroadcast({
+          ...this.currentProfile,
+          missions: updatedMissions
+        });
+      }
+    }
+
+    // 2. Persist to server if online
+    try {
+      const res = await fetch(`${SERVER_URL}/api/profile/record-event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: this.token,
+          eventKey,
+          count
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.profile) {
+          this.setAndBroadcast(data.profile);
+        }
+      }
+    } catch {
+      // Offline fallback: already updated optimistically above
+    }
+  }
+
   public async recordMatch(won: boolean, matchEvents: string[] = []): Promise<{ coinsEarned: number; capped: boolean } | null> {
     try {
       const res = await fetch(`${SERVER_URL}/api/profile/match-result`, {
@@ -192,7 +252,43 @@ class ProfileClientService {
         return { coinsEarned: data.coinsEarned, capped: data.capped };
       }
     } catch (e) {
-      console.error('Failed to record match on server:', e);
+      console.warn('Recording match result locally (offline mode):', e);
+      const earn = won ? 2 : 1;
+      const available = Math.max(0, this.currentProfile.dailyCapRemaining);
+      const coinsEarned = Math.min(earn, available);
+      const newCoins = this.currentProfile.coins + coinsEarned;
+      const newCap = available - coinsEarned;
+
+      const eventCounts: Record<string, number> = {};
+      for (const ev of matchEvents) {
+        eventCounts[ev] = (eventCounts[ev] || 0) + 1;
+      }
+      eventCounts['play_match'] = Math.max(1, eventCounts['play_match'] || 0);
+
+      const updatedMissions = (this.currentProfile.missions || []).map(m => {
+        for (const [ev, mId] of Object.entries(EVENT_TO_MISSION_ID)) {
+          if (m.id === mId && eventCounts[ev] && !m.completed) {
+            const inc = eventCounts[ev];
+            const newProgress = Math.min(m.target, m.progress + inc);
+            return {
+              ...m,
+              progress: newProgress,
+              completed: newProgress >= m.target
+            };
+          }
+        }
+        return m;
+      });
+
+      const updated = {
+        ...this.currentProfile,
+        coins: newCoins,
+        dailyCapRemaining: newCap,
+        coinsEarnedToday: this.currentProfile.coinsEarnedToday + coinsEarned,
+        missions: updatedMissions
+      };
+      this.setAndBroadcast(updated);
+      return { coinsEarned, capped: earn > available };
     }
     return null;
   }
@@ -219,6 +315,21 @@ class ProfileClientService {
   }
 
   public async buyItem(itemId: string): Promise<{ success: boolean; error?: string }> {
+    const catalogItem = (this.currentProfile.catalog || DEFAULT_CATALOG).find(i => i.id === itemId) ||
+      DEFAULT_CATALOG.find(i => i.id === itemId);
+
+    if (!catalogItem) {
+      return { success: false, error: 'Artículo no encontrado en el catálogo' };
+    }
+
+    if (this.currentProfile.unlockedItems.includes(itemId)) {
+      return { success: false, error: 'Ya compraste este artículo' };
+    }
+
+    if (this.currentProfile.coins < catalogItem.price) {
+      return { success: false, error: 'Monedas insuficientes para esta compra' };
+    }
+
     try {
       const res = await fetch(`${SERVER_URL}/api/profile/buy-item`, {
         method: 'POST',
@@ -234,13 +345,43 @@ class ProfileClientService {
         }
         return { success: false, error: data.error };
       }
-    } catch (e: any) {
-      return { success: false, error: 'Error de conexión con el servidor' };
+    } catch {
+      // Offline fallback: update profile locally and persist to localStorage
+      console.warn('Procesando compra localmente (Modo Offline):', itemId);
+      const updatedProfile: PlayerProfile = {
+        ...this.currentProfile,
+        coins: this.currentProfile.coins - catalogItem.price,
+        unlockedItems: [...this.currentProfile.unlockedItems, itemId]
+      };
+      this.setAndBroadcast(updatedProfile);
+      return { success: true };
     }
     return { success: false, error: 'No se pudo completar la compra' };
   }
 
   public async equipItem(itemId: string): Promise<boolean> {
+    const catalogItem = (this.currentProfile.catalog || DEFAULT_CATALOG).find(i => i.id === itemId) ||
+      DEFAULT_CATALOG.find(i => i.id === itemId);
+
+    if (!catalogItem) return false;
+
+    // Must be unlocked
+    if (!this.currentProfile.unlockedItems.includes(itemId)) return false;
+
+    // Apply equip changes locally immediately (0ms UI latency & offline support)
+    const updatedProfile = { ...this.currentProfile };
+    if (catalogItem.category === 'title') {
+      updatedProfile.equippedTitle = catalogItem.name;
+    } else if (catalogItem.category === 'mate') {
+      updatedProfile.equippedMate = catalogItem.id.replace('mate_', '');
+    } else if (catalogItem.category === 'border') {
+      updatedProfile.equippedBorder = catalogItem.id.replace('border_', '');
+    } else if (catalogItem.category === 'cardBack') {
+      updatedProfile.equippedCardBack = catalogItem.id.replace('card_', '');
+    }
+    this.setAndBroadcast(updatedProfile);
+
+    // Sync to server in background if online
     try {
       const res = await fetch(`${SERVER_URL}/api/profile/equip-item`, {
         method: 'POST',
@@ -250,15 +391,15 @@ class ProfileClientService {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.profile) {
           this.setAndBroadcast(data.profile);
-          return true;
         }
       }
-    } catch (e) {
-      console.error('Failed to equip item:', e);
+    } catch {
+      // Offline mode: already applied locally
+      console.warn('Artículo equipado localmente (Modo Offline):', itemId);
     }
-    return false;
+    return true;
   }
 
   public async generateSyncCode(): Promise<{ success: boolean; code?: string; expiresAt?: number; error?: string }> {

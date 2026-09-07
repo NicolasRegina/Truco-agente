@@ -43,7 +43,8 @@ export const InteractiveMate: React.FC<InteractiveMateProps> = ({
 
   // Color & texture mapping according to equipped mate style
   const getMateVisuals = () => {
-    switch (mateStyle) {
+    const style = (mateStyle || 'calabaza').replace('mate_', '');
+    switch (style) {
       case 'algarrobo':
         return {
           bodyGrad1: '#b45309',
@@ -118,11 +119,11 @@ export const InteractiveMate: React.FC<InteractiveMateProps> = ({
           <circle cx="34" cy="5" r="2.5" fill="#f59e0b" stroke="#78350f" strokeWidth="0.8" />
 
           {/* Gourd Calabash Body */}
-          <ellipse cx="25" cy="38" rx="18" ry="18" fill="url(#mateBodyGrad)" stroke={visuals.stroke} strokeWidth="2" />
+          <ellipse cx="25" cy="38" rx="18" ry="18" fill={`url(#mateBodyGrad_${visuals.label})`} stroke={visuals.stroke} strokeWidth="2" />
           <ellipse cx="25" cy="22" rx="13" ry="5" fill="#15803d" stroke={visuals.stroke} strokeWidth="1.5" />
 
           {/* Virola Top Rim */}
-          <ellipse cx="25" cy="20" rx="14" ry="4.5" fill="url(#mateRimGrad)" stroke="#475569" strokeWidth="1" />
+          <ellipse cx="25" cy="20" rx="14" ry="4.5" fill={`url(#mateRimGrad_${visuals.label})`} stroke="#475569" strokeWidth="1" />
 
           {/* Yerba Mate Leaf Center */}
           <ellipse cx="25" cy="22" rx="9" ry="3" fill="#14532d" />
@@ -130,11 +131,11 @@ export const InteractiveMate: React.FC<InteractiveMateProps> = ({
 
           {/* Gradients */}
           <defs>
-            <linearGradient id="mateBodyGrad" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={`mateBodyGrad_${visuals.label}`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor={visuals.bodyGrad1} />
               <stop offset="100%" stopColor={visuals.bodyGrad2} />
             </linearGradient>
-            <linearGradient id="mateRimGrad" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`mateRimGrad_${visuals.label}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={visuals.rimGrad1} />
               <stop offset="100%" stopColor={visuals.rimGrad2} />
             </linearGradient>

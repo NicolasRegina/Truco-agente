@@ -217,8 +217,9 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
     return item.category === bazarFilter;
   });
 
-  const getBorderClasses = (borderId: string) => {
-    switch (borderId) {
+  const getBorderClasses = (borderId: string = '') => {
+    const cleanId = (borderId || '').replace('border_', '');
+    switch (cleanId) {
       case 'silver':
         return 'border-slate-300 ring-2 ring-slate-300/60 shadow-[0_0_15px_rgba(203,213,225,0.5)]';
       case 'gold':
@@ -628,12 +629,16 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
               {filteredCatalog.map(item => {
                 const isUnlocked = profile.unlockedItems.includes(item.id);
                 
-                // Check if currently equipped
+                // Check if currently equipped (robust against prefixed and stripped IDs)
                 let isEquipped = false;
-                if (item.category === 'mate') isEquipped = profile.equippedMate === item.id.replace('mate_', '');
+                const cleanMate = (profile.equippedMate || '').replace('mate_', '');
+                const cleanBorder = (profile.equippedBorder || '').replace('border_', '');
+                const cleanCardBack = (profile.equippedCardBack || '').replace('card_', '');
+
+                if (item.category === 'mate') isEquipped = cleanMate === item.id.replace('mate_', '');
                 else if (item.category === 'title') isEquipped = profile.equippedTitle === item.name;
-                else if (item.category === 'border') isEquipped = profile.equippedBorder === item.id.replace('border_', '');
-                else if (item.category === 'cardBack') isEquipped = profile.equippedCardBack === item.id.replace('card_', '');
+                else if (item.category === 'border') isEquipped = cleanBorder === item.id.replace('border_', '');
+                else if (item.category === 'cardBack') isEquipped = cleanCardBack === item.id.replace('card_', '');
 
                 const canAfford = profile.coins >= item.price;
                 const isQuickWin = item.id === 'mate_algarrobo';

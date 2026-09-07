@@ -51,7 +51,8 @@ export const CardView: React.FC<CardViewProps> = ({
   cardBackId
 }) => {
   const currentTheme = getTheme(themeId);
-  const equippedBack = cardBackId || profileService.getCached()?.equippedCardBack || 'clasico';
+  const rawBack = cardBackId || profileService.getCached()?.equippedCardBack || 'clasico';
+  const equippedBack = rawBack.replace('card_', '');
   const cardBackSrc = `/card_backs/card_${equippedBack}.jpg`;
 
   const sizeClasses = {

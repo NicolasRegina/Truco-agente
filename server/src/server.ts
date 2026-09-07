@@ -85,6 +85,22 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (pathname === '/api/profile/record-event' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const { token, eventKey, count } = body;
+
+      if (!token || !eventKey) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing parameters' }));
+        return;
+      }
+
+      const result = ProfileService.recordEvent(token, eventKey, count || 1);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+
     if (pathname === '/api/profile/claim-mission' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const { token, missionId } = body;

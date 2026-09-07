@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Card,
   GameAction,
   GameState,
   HandLogEntry,
-  PlayerId
+  PlayerId,
+  calculateEnvido
 } from '@truco/core';
 import { CardView, preloadCardImages } from './CardView';
 import { ScoreBoard } from './ScoreBoard';
@@ -147,30 +148,73 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     state.truco.currentLevel
   ]);
 
+  // Accumulated events during the match
+  const matchEventsRef = useRef<string[]>([]);
+
+  const trackEvent = (eventKey: string) => {
+    matchEventsRef.current.push(eventKey);
+    profileService.recordEvent(eventKey);
+  };
+
+  // Track mission: El Envido está Primero (Sumá al menos 28 puntos de envido en una mano)
+  const lastEnvidoHandChecked = useRef<number>(-1);
+  useEffect(() => {
+    if (state.handNumber !== lastEnvidoHandChecked.current && myHand.length === 3) {
+      lastEnvidoHandChecked.current = state.handNumber;
+      const envidoScore = calculateEnvido(myHand);
+      if (envidoScore >= 28) {
+        trackEvent('high_envido');
+      }
+    }
+  }, [state.handNumber, myHand]);
+
+  // Track mission: Tanto Bravo (Cantá y ganá un Envido o Real Envido)
+  const lastEnvidoResolvedHand = useRef<number>(-1);
+  useEffect(() => {
+    if (
+      state.envido.isResolved &&
+      state.envido.winner === myPlayerId &&
+      lastEnvidoResolvedHand.current !== state.handNumber
+    ) {
+      lastEnvidoResolvedHand.current = state.handNumber;
+      trackEvent('win_envido');
+    }
+  }, [state.envido.isResolved, state.envido.winner, state.handNumber, myPlayerId]);
+
+  // Track mission: El Arte del Engaño (Ganá una mano jugando al menos una carta tapada)
+  const lastHandWinnerChecked = useRef<number>(-1);
+  useEffect(() => {
+    if (
+      state.phase === 'hand_ended' &&
+      state.handWinner === myPlayerId &&
+      lastHandWinnerChecked.current !== state.handNumber
+    ) {
+      lastHandWinnerChecked.current = state.handNumber;
+      const playedCovered = (state.playedCards[myPlayerId] || []).some(c => c.isCovered);
+      if (playedCovered) {
+        trackEvent('win_covered_card');
+      }
+    }
+  }, [state.phase, state.handWinner, state.handNumber, myPlayerId, state.playedCards]);
+
   // Record match result & award coins / advance missions when match ends
   useEffect(() => {
     if (state.matchWinner && !matchRewardRecorded) {
       setMatchRewardRecorded(true);
       const won = state.matchWinner === myPlayerId;
-      const events: string[] = ['play_match'];
 
-      if (state.config.maxScore === 15 || state.config.withFlor) {
-        events.push('custom_game');
-      }
-      if (isOnlineMultiplayer || oppName.includes('Canchero')) {
-        events.push('hard_or_online_match');
-      }
-      if (state.envido.history.includes('falta_envido')) {
-        events.push('accept_falta_envido');
-      }
-      if (state.envido.winner === myPlayerId) {
-        events.push('win_envido');
-      }
-      if (state.truco.currentLevel === 'retruco' || state.truco.currentLevel === 'vale_cuatro') {
-        events.push('call_retruco');
+      // Encuentro en la Pulpería: Completá 2 partidas en cualquier modalidad
+      trackEvent('play_match');
+
+      // Duelo Gaucho: Jugá una partida en línea o contra el bot (always completed on match end)
+      trackEvent('hard_or_online_match');
+
+      // Mesa a medida: Jugá una partida personalizada (15 pts, con Flor o contra el bot)
+      if (state.config.maxScore === 15 || state.config.withFlor || !isOnlineMultiplayer) {
+        trackEvent('custom_game');
       }
 
-      profileService.recordMatch(won, events).then((res) => {
+      profileService.recordMatch(won, matchEventsRef.current).then((res) => {
         if (res) {
           setMatchReward(res);
           if (res.coinsEarned > 0) {
@@ -179,11 +223,22 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         }
       });
     }
-  }, [state.matchWinner, matchRewardRecorded, myPlayerId, state.config, state.envido, state.truco, isOnlineMultiplayer, oppName]);
+  }, [state.matchWinner, matchRewardRecorded, myPlayerId, state.config, isOnlineMultiplayer]);
 
-  // Clear advice once player plays
+  // Handle player actions with mission tracking
   const handleAction = (action: GameAction) => {
     setCoachAdvice(null);
+
+    // Track mission: ¡Retruco, Carajo! (Cantá Retruco o Vale Cuatro en cualquier mano)
+    if (action.type === 'CALL_RETRUCO' || action.type === 'CALL_VALE_CUATRO') {
+      trackEvent('call_retruco');
+    }
+
+    // Track mission: Coraje Criollo (Aceptá una Falta Envido con ¡Quiero!)
+    if (action.type === 'QUIERO' && state.envido.currentCall === 'falta_envido') {
+      trackEvent('accept_falta_envido');
+    }
+
     onAction(action);
   };
 
@@ -382,7 +437,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           <div className="flex items-center justify-center -space-x-3 sm:-space-x-5">
             {oppHand.map((card, i) => (
               <div key={i} className="hover:-translate-y-1 transition-transform">
-                <CardView card={card} isFlipped={true} size="sm" themeId={themeId} />
+                <CardView card={card} isFlipped={true} size="sm" themeId={themeId} cardBackId={profile?.equippedCardBack} />
               </div>
             ))}
           </div>
@@ -428,7 +483,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                         key={cIdx}
                         className={`transition-transform duration-300 ${cIdx === 0 ? '-rotate-6 translate-y-0.5' : 'rotate-6 -translate-y-0.5'}`}
                       >
-                        <CardView card={pc.card} size="sm" themeId={themeId} />
+                        <CardView card={pc.card} size="sm" themeId={themeId} cardBackId={profile?.equippedCardBack} />
                       </div>
                     ))}
                   </div>
@@ -517,18 +572,18 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           {/* Player info & speech */}
           <div className="flex items-center gap-2">
             <div className={`px-2.5 py-0.5 sm:px-3 sm:py-1 bg-black/60 backdrop-blur-md rounded-full border text-[11px] sm:text-xs font-bold text-amber-200 flex items-center gap-1.5 shadow-lg ${
-              profile?.equippedBorder === 'gold'
+              (profile?.equippedBorder || '').replace('border_', '') === 'gold'
                 ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]'
-                : profile?.equippedBorder === 'silver'
+                : (profile?.equippedBorder || '').replace('border_', '') === 'silver'
                 ? 'border-slate-300 shadow-[0_0_10px_rgba(203,213,225,0.5)]'
-                : profile?.equippedBorder === 'fire'
+                : (profile?.equippedBorder || '').replace('border_', '') === 'fire'
                 ? 'border-orange-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]'
                 : 'border-amber-800/50'
             }`}>
               <div className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-300/40"></div>
               <span>{myName}</span>
               {profile?.equippedTitle && (
-                <span className="text-[10px] text-amber-400/90 font-bold hidden sm:inline">• {profile.equippedTitle}</span>
+                <span className="text-[9px] sm:text-[10px] text-amber-400/90 font-bold">• {profile.equippedTitle}</span>
               )}
               {state.mano === myPlayerId && (
                 <span className="text-[9px] bg-amber-500 text-stone-950 px-1 rounded font-black">Mano</span>
@@ -579,14 +634,24 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           />
         </div>
 
-        {/* Left Side: Interactive Criollo Mate (Desktop only to prevent visual spam on mobile) */}
-        <div className="hidden sm:block absolute bottom-4 left-4 z-30 scale-90 sm:scale-100 origin-bottom-left">
-          <InteractiveMate mateStyle={profile?.equippedMate} />
+        {/* Left Side: Interactive Criollo Mate (with mission tracking) */}
+        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-30 scale-75 sm:scale-100 origin-bottom-left">
+          <InteractiveMate
+            mateStyle={profile?.equippedMate}
+            onDrink={() => {
+              trackEvent('drink_mate');
+            }}
+          />
         </div>
 
-        {/* Right Side: Emote Wheel Button (Desktop only to prevent visual spam on mobile) */}
-        <div className="hidden sm:block absolute bottom-4 right-4 z-30 scale-90 sm:scale-100 origin-bottom-right">
-          <ChatEmotes onSendMessage={onSendChat} />
+        {/* Right Side: Emote Wheel Button (with mission tracking) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 scale-75 sm:scale-100 origin-bottom-right">
+          <ChatEmotes
+            onSendMessage={(text) => {
+              trackEvent('send_emote');
+              onSendChat(text);
+            }}
+          />
         </div>
       </main>
 
