@@ -6,6 +6,7 @@ import { WaitingRoom } from './components/WaitingRoom';
 import { MatchmakingModal } from './components/MatchmakingModal';
 import { ThemeId } from './themes/types';
 import { useGameEngine } from './hooks/useGameEngine';
+import { profileService } from './services/profileService';
 
 type Screen = 'lobby' | 'game';
 
@@ -15,12 +16,12 @@ export const App: React.FC = () => {
   const [isMatchmaking, setIsMatchmaking] = useState(false);
   // Enforce authentic gaucho criollo deck until other themes have complete 40-card illustrations
   const [themeId] = useState<ThemeId>('gaucho');
-  const [config, setConfig] = useState<MatchConfig>({
+  const [config, setConfig] = useState<MatchConfig>(() => ({
     maxScore: 30,
     withFlor: false,
-    p1Name: 'Leo Messi',
+    p1Name: (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || profileService.getCached()?.playerName || 'Jugador 1',
     p2Name: 'Rodri De Paul'
-  });
+  }));
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('medio');
   const [onlineRoomId, setOnlineRoomId] = useState<string | undefined>(undefined);
   const [myPlayerId, setMyPlayerId] = useState<PlayerId>('p1');
@@ -45,14 +46,19 @@ export const App: React.FC = () => {
     isMatchmaking
   });
 
+  const getEffectivePlayerName = (name?: string) => {
+    return (name && name.trim()) || (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || profileService.getCached()?.playerName || 'Jugador 1';
+  };
+
   const handleStartAiGame = (matchConfig: MatchConfig, difficulty: BotDifficulty, playerName: string) => {
     const isDif = difficulty === 'dificil' || difficulty === 'canchero';
     const isMed = difficulty === 'medio' || difficulty === 'intermedio';
     const botLabel = isDif ? 'Difícil' : isMed ? 'Medio' : 'Fácil';
+    const effectiveName = getEffectivePlayerName(playerName);
 
     setConfig({
       ...matchConfig,
-      p1Name: playerName,
+      p1Name: effectiveName,
       p2Name: `Bot ${botLabel}`
     });
     setAiDifficulty(difficulty);
@@ -63,9 +69,10 @@ export const App: React.FC = () => {
   };
 
   const handleStartMatchmaking = (matchConfig: MatchConfig, playerName: string) => {
+    const effectiveName = getEffectivePlayerName(playerName);
     setConfig({
       ...matchConfig,
-      p1Name: playerName,
+      p1Name: effectiveName,
       p2Name: 'Buscando rival...'
     });
     setGameMode('online');
@@ -76,9 +83,10 @@ export const App: React.FC = () => {
   };
 
   const handleCreateOnlineRoom = (matchConfig: MatchConfig, playerName: string) => {
+    const effectiveName = getEffectivePlayerName(playerName);
     setConfig({
       ...matchConfig,
-      p1Name: playerName,
+      p1Name: effectiveName,
       p2Name: 'Esperando rival...'
     });
     setGameMode('online');

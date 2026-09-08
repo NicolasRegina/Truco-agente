@@ -90,7 +90,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   const currentTheme = getTheme(themeId);
 
   const opponentId: PlayerId = myPlayerId === 'p1' ? 'p2' : 'p1';
-  const myName = myPlayerId === 'p1' ? (state.config.p1Name || 'Jugador 1') : (state.config.p2Name || 'Jugador 2');
+  const myName = myPlayerId === 'p1' ? (profile?.playerName || state.config.p1Name || 'Jugador 1') : (state.config.p2Name || 'Jugador 2');
   const oppName = opponentId === 'p1' ? (state.config.p1Name || 'Jugador 1') : (state.config.p2Name || 'Jugador 2');
 
   const myHand = state.hands[myPlayerId] || [];
@@ -450,7 +450,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             <ScoreBoard
               score={state.score}
               maxScore={state.config.maxScore}
-              p1Name={state.config.p1Name || 'P1'}
+              p1Name={myPlayerId === 'p1' ? (profile?.playerName || state.config.p1Name || 'Jugador 1') : (state.config.p1Name || 'P1')}
               p2Name={state.config.p2Name || 'P2'}
               mano={state.mano}
               turn={state.turn}

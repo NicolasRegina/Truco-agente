@@ -17,6 +17,7 @@ import {
 import { StatsModal } from './StatsModal';
 import { ProfileBazarModal } from './ProfileBazarModal';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
+import { profileService } from '../services/profileService';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { ThemeId } from '../themes/types';
 
@@ -39,7 +40,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [playerName, setPlayerName] = useState(() => {
-    return (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Leo Messi';
+    return profileService.getCached()?.playerName || (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Nico';
   });
   const [roomCode, setRoomCode] = useState('');
   const [maxScore, setMaxScore] = useState<15 | 30>(30);
@@ -80,10 +81,35 @@ export const Lobby: React.FC<LobbyProps> = ({
     }
   }, []);
 
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  // Sync playerName when profile loads or updates (e.g. from Mi Perfil modal)
+  useEffect(() => {
+    if (profile?.playerName && profile.playerName !== 'Gaucho' && profile.playerName !== playerName) {
+      setPlayerName(profile.playerName);
+      setNameError(null);
+    }
+  }, [profile?.playerName]);
+
   const handlePlayerNameChange = (val: string) => {
     setPlayerName(val);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('truco_saved_player_name', val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      setNameError('El apodo es obligatorio');
+    } else if (trimmed.length < 2) {
+      setNameError('Mínimo 2 caracteres');
+    } else {
+      setNameError(null);
+      profileService.updatePlayerName(trimmed);
+    }
+  };
+
+  const handlePlayerNameBlur = () => {
+    const trimmed = playerName.trim();
+    if (!trimmed || trimmed.length < 2) {
+      const fallback = profile?.playerName || (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || 'Nico';
+      setPlayerName(fallback);
+      setNameError(null);
     }
   };
 
@@ -96,6 +122,12 @@ export const Lobby: React.FC<LobbyProps> = ({
   };
 
   const handleStart = () => {
+    const trimmedName = playerName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setNameError('El apodo es obligatorio (mínimo 2 caracteres)');
+      return;
+    }
+
     if (!isOnline && selectedMode !== 'ai') {
       alert('Esta modalidad requiere conexión a internet. Para jugar sin conexión seleccioná el modo "vs Bot".');
       setSelectedMode('ai');
@@ -109,24 +141,24 @@ export const Lobby: React.FC<LobbyProps> = ({
     const config: MatchConfig = {
       maxScore,
       withFlor,
-      p1Name: playerName || 'Jugador 1',
+      p1Name: trimmedName,
       p2Name: selectedMode === 'ai'
         ? `Bot ${botLabel}`
         : 'Rival'
     };
 
     if (selectedMode === 'ai') {
-      onStartAiGame(config, aiDifficulty, playerName);
+      onStartAiGame(config, aiDifficulty, trimmedName);
     } else if (selectedMode === 'public') {
-      onStartMatchmaking(config, playerName);
+      onStartMatchmaking(config, trimmedName);
     } else if (selectedMode === 'online_create') {
-      onCreateOnlineRoom(config, playerName);
+      onCreateOnlineRoom(config, trimmedName);
     } else if (selectedMode === 'online_join') {
       if (!roomCode.trim()) {
         alert('Por favor ingresá un código de sala');
         return;
       }
-      onJoinOnlineRoom(roomCode.trim().toUpperCase(), playerName);
+      onJoinOnlineRoom(roomCode.trim().toUpperCase(), trimmedName);
     }
   };
 
@@ -364,18 +396,31 @@ export const Lobby: React.FC<LobbyProps> = ({
 
         {/* Player Name Input */}
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300/80 flex items-center gap-1">
-            <User className="w-3 h-3 text-amber-400" />
-            <span>Tu Apodo en la Mesa</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300/80 flex items-center gap-1">
+              <User className="w-3 h-3 text-amber-400" />
+              <span>Tu Apodo en la Mesa <span className="text-red-400">*</span></span>
+            </label>
+            {nameError && (
+              <span className="text-[10px] font-bold text-red-400 animate-pulse">
+                ⚠️ {nameError}
+              </span>
+            )}
+          </div>
           <div className="relative">
             <input
               type="text"
+              required
               value={playerName}
               onChange={(e) => handlePlayerNameChange(e.target.value)}
+              onBlur={handlePlayerNameBlur}
               placeholder="Ingresá tu apodo"
               maxLength={15}
-              className="w-full bg-black/60 border border-amber-700/60 rounded-xl px-3.5 py-2 text-amber-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder:text-stone-500 shadow-inner"
+              className={`w-full bg-black/60 border rounded-xl px-3.5 py-2 text-amber-100 text-sm font-semibold focus:outline-none focus:ring-2 shadow-inner transition-colors ${
+                nameError
+                  ? 'border-red-500/90 focus:ring-red-500/80 bg-red-950/20'
+                  : 'border-amber-700/60 focus:ring-amber-400 focus:border-transparent placeholder:text-stone-500'
+              }`}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 text-[10px] font-mono select-none">
               {playerName.length}/15
@@ -543,7 +588,12 @@ export const Lobby: React.FC<LobbyProps> = ({
         {/* Primary CTA Play Button with 3D Emboss & Dynamic Action text */}
         <button
           onClick={handleStart}
-          className="w-full py-3.5 px-6 mt-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-98 text-stone-950 font-black text-base sm:text-lg rounded-2xl shadow-[0_10px_25px_rgba(245,158,11,0.35)] border-2 border-amber-200 transition-all flex items-center justify-center gap-2.5"
+          disabled={!playerName.trim() || playerName.trim().length < 2}
+          className={`w-full py-3.5 px-6 mt-1 text-stone-950 font-black text-base sm:text-lg rounded-2xl border-2 transition-all flex items-center justify-center gap-2.5 ${
+            !playerName.trim() || playerName.trim().length < 2
+              ? 'bg-stone-800 text-stone-500 border-stone-700 cursor-not-allowed opacity-60 shadow-none'
+              : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-98 border-amber-200 shadow-[0_10px_25px_rgba(245,158,11,0.35)] cursor-pointer'
+          }`}
         >
           {selectedMode === 'public' ? (
             <>

@@ -15,7 +15,8 @@ import {
   Lock,
   Clock,
   ShieldCheck,
-  Loader2
+  Loader2,
+  Pencil
 } from 'lucide-react';
 import { soundFx } from '../utils/soundController';
 import { MatePreview, CardBackPreview, BorderPreview, TitlePreview } from './BazarVisualPreviews';
@@ -48,6 +49,36 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
   const [targetWaiting, setTargetWaiting] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
   const [syncStatusType, setSyncStatusType] = useState<'info' | 'success' | 'error'>('info');
+
+  // Inline name editing state
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(profile.playerName || '');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    if (!editingName && profile.playerName) {
+      setNameInput(profile.playerName);
+    }
+  }, [profile.playerName, editingName]);
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setNameError('Mínimo 2 caracteres');
+      return;
+    }
+    setSavingName(true);
+    setNameError(null);
+    const res = await profileService.updatePlayerName(trimmed);
+    setSavingName(false);
+    if (res.success) {
+      setEditingName(false);
+      soundFx.playScoreTally();
+    } else {
+      setNameError(res.error || 'No se pudo actualizar el apodo');
+    }
+  };
 
   const stats = loadPlayerStats();
   const winRate = stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0;
@@ -321,7 +352,61 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                 🧉
               </div>
               <div className="text-center sm:text-left flex-1">
-                <h3 className="text-xl font-black text-amber-200 font-headline">{profile.playerName}</h3>
+                {editingName ? (
+                  <div className="flex flex-col gap-1 mb-1 items-center sm:items-start animate-speech">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        placeholder="Ingresá tu apodo"
+                        maxLength={15}
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveName();
+                          if (e.key === 'Escape') setEditingName(false);
+                        }}
+                        className="bg-black/90 border border-amber-500 rounded-xl px-3 py-1 text-sm font-black text-amber-200 focus:outline-none ring-2 ring-amber-400 w-44 sm:w-52"
+                      />
+                      <button
+                        onClick={handleSaveName}
+                        disabled={savingName}
+                        className="p-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl font-bold transition-all shadow active:scale-95 disabled:opacity-50"
+                        title="Guardar apodo"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingName(false);
+                          setNameError(null);
+                        }}
+                        className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl transition-all"
+                        title="Cancelar"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {nameError && (
+                      <span className="text-[10px] text-red-400 font-bold">⚠️ {nameError}</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 justify-center sm:justify-start">
+                    <h3 className="text-xl font-black text-amber-200 font-headline">{profile.playerName}</h3>
+                    <button
+                      onClick={() => {
+                        setNameInput(profile.playerName || '');
+                        setNameError(null);
+                        setEditingName(true);
+                      }}
+                      className="p-1 text-amber-400/80 hover:text-amber-200 hover:bg-amber-950/60 rounded-lg transition-colors"
+                      title="Editar apodo"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/40">
                   {profile.equippedTitle}
                 </span>

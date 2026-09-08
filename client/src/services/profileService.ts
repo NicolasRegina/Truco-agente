@@ -174,10 +174,17 @@ class ProfileClientService {
 
   public async refresh(): Promise<PlayerProfile> {
     try {
-      const savedName = localStorage.getItem('truco_saved_player_name') || 'Leo Messi';
+      const savedName = (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || this.currentProfile.playerName || 'Leo Messi';
       const res = await fetch(`${SERVER_URL}/api/profile?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(savedName)}`);
       if (res.ok) {
-        const data = await res.json();
+        const data: PlayerProfile = await res.json();
+        // If server profile returned an accidental 'Gaucho' or empty, but local has a custom name, preserve local name and heal server!
+        if ((!data.playerName || data.playerName === 'Gaucho') && savedName && savedName !== 'Gaucho') {
+          data.playerName = savedName;
+          this.updatePlayerName(savedName).catch(() => {});
+        } else if (data.playerName && data.playerName !== 'Gaucho' && typeof localStorage !== 'undefined') {
+          localStorage.setItem('truco_saved_player_name', data.playerName);
+        }
         this.setAndBroadcast(data);
         return data;
       }
@@ -400,6 +407,47 @@ class ProfileClientService {
       console.warn('Artículo equipado localmente (Modo Offline):', itemId);
     }
     return true;
+  }
+
+  public async updatePlayerName(newName: string): Promise<{ success: boolean; error?: string }> {
+    const trimmed = (newName || '').trim();
+    if (!trimmed || trimmed.length < 2) {
+      return { success: false, error: 'El apodo debe tener al menos 2 caracteres' };
+    }
+    if (trimmed.length > 20) {
+      return { success: false, error: 'El apodo no puede exceder 20 caracteres' };
+    }
+
+    // 1. Persist to localStorage immediately
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('truco_saved_player_name', trimmed);
+    }
+
+    // 2. Optimistic local profile update & broadcast to all components
+    const updated: PlayerProfile = {
+      ...this.currentProfile,
+      playerName: trimmed
+    };
+    this.setAndBroadcast(updated);
+
+    // 3. Persist to backend database in background
+    try {
+      const res = await fetch(`${SERVER_URL}/api/profile/update-name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: this.token, name: trimmed })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.profile) {
+          this.setAndBroadcast(data.profile);
+        }
+      }
+    } catch (e) {
+      console.warn('Apodo guardado localmente (Modo Offline):', trimmed, e);
+    }
+
+    return { success: true };
   }
 
   public async generateSyncCode(): Promise<{ success: boolean; code?: string; expiresAt?: number; error?: string }> {

@@ -206,9 +206,12 @@ function generateSyncCode(): string {
 }
 
 export class ProfileService {
-  public static ensurePlayer(deviceToken: string, playerName: string = 'Gaucho'): any {
+  public static ensurePlayer(deviceToken: string, playerName?: string): any {
     const today = getTodayDateString();
     let player = db.prepare('SELECT * FROM players WHERE device_token = ?').get(deviceToken) as any;
+
+    const trimmedInputName = (playerName || '').trim();
+    const effectiveName = (trimmedInputName && trimmedInputName !== 'Gaucho') ? trimmedInputName : 'Leo Messi';
 
     if (!player) {
       const defaultUnlocked = JSON.stringify(['mate_calabaza', 'title_novato', 'border_default', 'card_clasico']);
@@ -227,7 +230,7 @@ export class ProfileService {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         deviceToken,
-        playerName,
+        effectiveName,
         5, // 5 welcome bonus coins to get started
         0,
         today,
@@ -242,7 +245,15 @@ export class ProfileService {
       );
 
       player = db.prepare('SELECT * FROM players WHERE device_token = ?').get(deviceToken) as any;
-    } else if (player.last_earn_date !== today) {
+    } else {
+      // Self-heal: if the existing player record has 'Gaucho' or empty name, and an actual custom name is provided, update it!
+      if (trimmedInputName && trimmedInputName !== 'Gaucho' && (!player.player_name || player.player_name === 'Gaucho')) {
+        db.prepare('UPDATE players SET player_name = ?, updated_at = ? WHERE device_token = ?').run(trimmedInputName, Date.now(), deviceToken);
+        player.player_name = trimmedInputName;
+      }
+    }
+
+    if (player.last_earn_date !== today) {
       // New day: reset daily coins earned
       db.prepare(`
         UPDATE players
@@ -520,6 +531,24 @@ export class ProfileService {
     if (field) {
       db.prepare(`UPDATE players SET ${field} = ?, updated_at = ? WHERE device_token = ?`).run(val, Date.now(), deviceToken);
     }
+
+    return {
+      success: true,
+      profile: this.getProfile(deviceToken)
+    };
+  }
+
+  public static updatePlayerName(deviceToken: string, newName: string): { success: boolean; error?: string; profile: PlayerProfileDTO } {
+    this.ensurePlayer(deviceToken);
+    const trimmed = (newName || '').trim();
+    if (!trimmed || trimmed.length < 2) {
+      return { success: false, error: 'El apodo debe tener al menos 2 caracteres', profile: this.getProfile(deviceToken) };
+    }
+    if (trimmed.length > 20) {
+      return { success: false, error: 'El apodo no puede exceder 20 caracteres', profile: this.getProfile(deviceToken) };
+    }
+
+    db.prepare(`UPDATE players SET player_name = ?, updated_at = ? WHERE device_token = ?`).run(trimmed, Date.now(), deviceToken);
 
     return {
       success: true,

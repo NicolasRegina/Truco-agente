@@ -55,7 +55,7 @@ const server = http.createServer(async (req, res) => {
   try {
     if (pathname === '/api/profile' && req.method === 'GET') {
       const token = parsedUrl.searchParams.get('token');
-      const name = parsedUrl.searchParams.get('name') || 'Gaucho';
+      const name = parsedUrl.searchParams.get('name') || undefined;
 
       if (!token) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -66,6 +66,22 @@ const server = http.createServer(async (req, res) => {
       const profile = ProfileService.getProfile(token, name);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(profile));
+      return;
+    }
+
+    if (pathname === '/api/profile/update-name' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const { token, name } = body;
+
+      if (!token) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing token' }));
+        return;
+      }
+
+      const result = ProfileService.updatePlayerName(token, name);
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
       return;
     }
 
