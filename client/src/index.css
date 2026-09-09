@@ -27,7 +27,7 @@ img {
 .card-img-crisp {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: high-quality;
-  transform: translateZ(0);
+  will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
