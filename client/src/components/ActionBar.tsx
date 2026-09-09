@@ -37,9 +37,114 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   const can = (type: ActionType) => isMyTurn && availableActions.includes(type);
 
   return (
-    <div className="w-full max-w-xl px-1.5 py-1 flex flex-col gap-1.5">
-      {/* Response Bar (Quiero / No Quiero) */}
-      {(state.phase === 'envido_pending' || state.phase === 'truco_pending' || state.phase === 'flor_pending') && (
+    <div className="w-full max-w-xl px-12 sm:px-4 py-1 flex flex-col gap-1.5">
+      {/* Truco Challenge Response Panel */}
+      {state.phase === 'truco_pending' && (
+        <div className="flex flex-col gap-1.5 p-2 bg-stone-950/85 backdrop-blur-md rounded-2xl border-2 border-amber-500/60 shadow-2xl animate-speech">
+          <div className="text-center text-[10px] sm:text-xs font-black text-amber-300 uppercase tracking-wider flex items-center justify-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>
+              {state.truco.pendingLevel === 'truco'
+                ? '🔥 Te cantaron ¡Truco!'
+                : state.truco.pendingLevel === 'retruco'
+                ? '🔥 Te cantaron ¡Re-Truco!'
+                : '🔥 Te cantaron ¡Vale Cuatro!'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+            {can('QUIERO') && (
+              <button
+                onClick={() => handleAction('QUIERO')}
+                className={`
+                  flex-1 min-w-[90px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-emerald-400/50 transition-all flex flex-col items-center justify-center
+                  ${recommendedAction === 'QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                `}
+              >
+                <span>¡Quiero!</span>
+                <span className="text-[9px] font-normal opacity-85">
+                  {state.truco.pendingLevel === 'truco' ? 'Jugar por 2 pts' : state.truco.pendingLevel === 'retruco' ? 'Jugar por 3 pts' : 'Jugar por 4 pts'}
+                </span>
+              </button>
+            )}
+
+            {can('NO_QUIERO') && (
+              <button
+                onClick={() => handleAction('NO_QUIERO')}
+                className={`
+                  flex-1 min-w-[90px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-rose-700 to-red-800 hover:from-rose-600 hover:to-red-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-rose-400/50 transition-all flex flex-col items-center justify-center
+                  ${recommendedAction === 'NO_QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                `}
+              >
+                <span>No Quiero</span>
+                <span className="text-[9px] font-normal opacity-85">
+                  {state.truco.pendingLevel === 'truco' ? 'Entrega 1 pt' : state.truco.pendingLevel === 'retruco' ? 'Entrega 2 pts' : 'Entrega 3 pts'}
+                </span>
+              </button>
+            )}
+
+            {can('CALL_RETRUCO') && (
+              <button
+                onClick={() => handleAction('CALL_RETRUCO')}
+                className={`
+                  flex-1 min-w-[100px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-blue-400/50 transition-all flex flex-col items-center justify-center
+                  ${recommendedAction === 'CALL_RETRUCO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                `}
+              >
+                <span>¡Quiero Re-Truco!</span>
+                <span className="text-[9px] font-normal opacity-85">Subir a 3 pts</span>
+              </button>
+            )}
+
+            {can('CALL_VALE_CUATRO') && (
+              <button
+                onClick={() => handleAction('CALL_VALE_CUATRO')}
+                className={`
+                  flex-1 min-w-[100px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 active:scale-95 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg border border-amber-300 transition-all flex flex-col items-center justify-center
+                  ${recommendedAction === 'CALL_VALE_CUATRO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                `}
+              >
+                <span>¡Quiero Vale Cuatro!</span>
+                <span className="text-[9px] font-bold opacity-85">Subir a 4 pts</span>
+              </button>
+            )}
+          </div>
+
+          {/* If Envido can precede Truco ("El envido está primero") */}
+          {(can('CALL_ENVIDO') || can('CALL_REAL_ENVIDO') || can('CALL_FALTA_ENVIDO')) && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1 border-t border-amber-500/25">
+              <span className="text-[10px] font-black text-amber-300">El Envido va primero:</span>
+              {can('CALL_ENVIDO') && (
+                <button
+                  onClick={() => handleAction('CALL_ENVIDO')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-500 text-stone-950 font-black text-[11px] shadow border border-amber-400"
+                >
+                  Envido (2 pts)
+                </button>
+              )}
+              {can('CALL_REAL_ENVIDO') && (
+                <button
+                  onClick={() => handleAction('CALL_REAL_ENVIDO')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-500 text-stone-950 font-black text-[11px] shadow border border-amber-400"
+                >
+                  Real Envido (3 pts)
+                </button>
+              )}
+              {can('CALL_FALTA_ENVIDO') && (
+                <button
+                  onClick={() => handleAction('CALL_FALTA_ENVIDO')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-500 text-stone-950 font-black text-[11px] shadow border border-amber-400"
+                >
+                  Falta Envido
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Envido / Flor Response Bar (Quiero / No Quiero) */}
+      {(state.phase === 'envido_pending' || state.phase === 'flor_pending') && (
         <div className="flex items-center justify-center gap-2 p-1 bg-black/50 backdrop-blur-md rounded-2xl border border-amber-500/40 shadow-xl animate-speech">
           {can('QUIERO') && (
             <button
@@ -71,8 +176,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
       {/* Main Cantos Grid */}
       <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-        {/* Envido Cantos */}
-        {can('CALL_ENVIDO') && (
+        {/* Envido Cantos (only when not in truco_pending, since in truco_pending it's shown above) */}
+        {state.phase !== 'truco_pending' && can('CALL_ENVIDO') && (
           <ActionButton
             label="Envido"
             badge="2 pts"
@@ -81,7 +186,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             isRecommended={recommendedAction === 'CALL_ENVIDO'}
           />
         )}
-        {can('CALL_REAL_ENVIDO') && (
+        {state.phase !== 'truco_pending' && can('CALL_REAL_ENVIDO') && (
           <ActionButton
             label="Real Envido"
             badge="3 pts"
@@ -90,7 +195,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             isRecommended={recommendedAction === 'CALL_REAL_ENVIDO'}
           />
         )}
-        {can('CALL_FALTA_ENVIDO') && (
+        {state.phase !== 'truco_pending' && can('CALL_FALTA_ENVIDO') && (
           <ActionButton
             label="Falta Envido"
             badge="Falta"
@@ -120,8 +225,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           />
         )}
 
-        {/* Truco Cantos */}
-        {can('CALL_TRUCO') && (
+        {/* Truco Cantos in regular turns */}
+        {state.phase === 'waiting_action' && can('CALL_TRUCO') && (
           <ActionButton
             label="¡Truco!"
             badge="2 pts"
@@ -130,7 +235,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             isRecommended={recommendedAction === 'CALL_TRUCO'}
           />
         )}
-        {can('CALL_RETRUCO') && (
+        {state.phase === 'waiting_action' && can('CALL_RETRUCO') && (
           <ActionButton
             label="¡Retruco!"
             badge="3 pts"
@@ -139,7 +244,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             isRecommended={recommendedAction === 'CALL_RETRUCO'}
           />
         )}
-        {can('CALL_VALE_CUATRO') && (
+        {state.phase === 'waiting_action' && can('CALL_VALE_CUATRO') && (
           <ActionButton
             label="¡Vale Cuatro!"
             badge="4 pts"

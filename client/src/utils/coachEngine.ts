@@ -165,6 +165,15 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
       const tieCard = sortedCards.find(c => c.rank === opponentCard.rank);
 
       if (winningCard) {
+        if (state.currentTrickIndex === 2) {
+          return {
+            recommendedCardId: winningCard.id,
+            badge: 'Definir Mano',
+            title: `¡Matá con el ${formatCardLabel(winningCard)}!`,
+            explanation: `Superás el ${formatCardLabel(opponentCard)} del rival y te llevás la mano definitiva.`
+          };
+        }
+
         return {
           recommendedCardId: winningCard.id,
           badge: 'Ganar Mano',
@@ -182,13 +191,34 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         };
       }
 
-      // Cannot win: burn the lowest card
+      // Cannot win:
       const lowestCard = sortedCards[0];
+
+      // If it's trick 3 (last trick of the hand):
+      if (state.currentTrickIndex === 2) {
+        return {
+          recommendedCardId: lowestCard.id,
+          badge: 'Última Carta',
+          title: `Jugá el ${formatCardLabel(lowestCard)}`,
+          explanation: `No alcanza para superar el ${formatCardLabel(opponentCard)} del rival. Es tu última carta para cerrar la mano.`
+        };
+      }
+
+      // If earlier tricks with cards left:
+      if (sortedCards.length > 1) {
+        return {
+          recommendedCardId: lowestCard.id,
+          badge: 'Descarte',
+          title: `Quemá el ${formatCardLabel(lowestCard)}`,
+          explanation: `No podés matar el ${formatCardLabel(opponentCard)}. Tirale tu carta más baja y guardate las mejores para después.`
+        };
+      }
+
       return {
         recommendedCardId: lowestCard.id,
-        badge: 'Descarte',
-        title: `Quemá el ${formatCardLabel(lowestCard)}`,
-        explanation: `No podés matar el ${formatCardLabel(opponentCard)}. Tirale tu carta más baja y guardate las mejores.`
+        badge: 'Completar Ronda',
+        title: `Tirá el ${formatCardLabel(lowestCard)}`,
+        explanation: `No podés matar el ${formatCardLabel(opponentCard)}. Jugá tu carta para completar la ronda.`
       };
     }
 

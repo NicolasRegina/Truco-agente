@@ -403,9 +403,9 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         style={
           themeId === 'gaucho'
             ? {
-                backgroundImage: 'radial-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.88)), url(/themes/gaucho/table_bg.jpg)',
+                backgroundImage: 'radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 65%, rgba(10,5,3,0.92) 100%), url(/themes/gaucho/table_bg.jpg)',
                 backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundPosition: 'center 38%'
               }
             : undefined
         }
@@ -634,8 +634,8 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           />
         </div>
 
-        {/* Left Side: Interactive Criollo Mate (with mission tracking) */}
-        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-30 scale-75 sm:scale-100 origin-bottom-left">
+        {/* Left Side: Interactive Criollo Mate */}
+        <div className="absolute bottom-2.5 left-2 sm:bottom-4 sm:left-4 z-30 scale-85 sm:scale-100 origin-bottom-left">
           <InteractiveMate
             mateStyle={profile?.equippedMate}
             onDrink={() => {
@@ -644,8 +644,8 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           />
         </div>
 
-        {/* Right Side: Emote Wheel Button (with mission tracking) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 scale-75 sm:scale-100 origin-bottom-right">
+        {/* Right Side: Emote Wheel Button */}
+        <div className="absolute bottom-2.5 right-2 sm:bottom-4 sm:right-4 z-30 scale-85 sm:scale-100 origin-bottom-right">
           <ChatEmotes
             onSendMessage={(text) => {
               trackEvent('send_emote');

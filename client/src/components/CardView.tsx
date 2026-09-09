@@ -74,7 +74,7 @@ export const CardView: React.FC<CardViewProps> = ({
             (e.target as HTMLImageElement).src = '/card_backs/card_clasico.jpg';
           }}
           alt="Dorso de Carta"
-          className="w-full h-full object-cover scale-[1.02] card-img-crisp pointer-events-none select-none"
+          className="w-full h-full object-cover scale-[1.28] card-img-crisp pointer-events-none select-none"
         />
         {card?.isCovered && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
@@ -119,7 +119,7 @@ export const CardView: React.FC<CardViewProps> = ({
           alt={`${card.value} de ${card.suit}`}
           loading="eager"
           decoding="async"
-          className="w-full h-full object-cover scale-[1.07] card-img-crisp pointer-events-none select-none"
+          className="w-full h-full object-cover scale-[1.15] card-img-crisp pointer-events-none select-none"
         />
       </div>
     );
