@@ -56,9 +56,9 @@ export const CardView: React.FC<CardViewProps> = ({
   const cardBackSrc = `/card_backs/card_${equippedBack}.jpg`;
 
   const sizeClasses = {
-    sm: 'w-11 h-[68px] sm:w-16 sm:h-24 text-[8px] sm:text-xs rounded-md',
-    md: 'w-[72px] h-[108px] sm:w-28 sm:h-40 text-xs sm:text-sm rounded-lg',
-    lg: 'w-24 h-36 sm:w-36 sm:h-52 text-sm sm:text-base rounded-xl'
+    sm: 'w-11 h-[68px] sm:w-14 sm:h-[86px] text-[8px] sm:text-xs rounded-md',
+    md: 'w-[68px] h-[102px] sm:w-[96px] sm:h-[144px] text-xs sm:text-sm rounded-lg',
+    lg: 'w-20 h-[120px] sm:w-28 sm:h-42 text-sm sm:text-base rounded-xl'
   }[size];
 
   // Render card back (flipped, hidden or covered/tapada)
@@ -74,7 +74,6 @@ export const CardView: React.FC<CardViewProps> = ({
             (e.target as HTMLImageElement).src = '/card_backs/card_clasico.jpg';
           }}
           alt="Dorso de Carta"
-          style={{ transform: 'scale(1.28)' }}
           className="w-full h-full object-cover card-img-crisp pointer-events-none select-none"
         />
         {card?.isCovered && (
@@ -120,7 +119,6 @@ export const CardView: React.FC<CardViewProps> = ({
           alt={`${card.value} de ${card.suit}`}
           loading="eager"
           decoding="async"
-          style={{ transform: 'scale(1.15)' }}
           className="w-full h-full object-cover card-img-crisp pointer-events-none select-none"
         />
       </div>

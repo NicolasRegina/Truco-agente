@@ -595,7 +595,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           )}
 
           {/* Player info & speech */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2 z-20">
             <div className={`px-2.5 py-0.5 sm:px-3 sm:py-1 bg-black/60 backdrop-blur-md rounded-full border text-[11px] sm:text-xs font-bold text-amber-200 flex items-center gap-1.5 shadow-lg ${
               (profile?.equippedBorder || '').replace('border_', '') === 'gold'
                 ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]'

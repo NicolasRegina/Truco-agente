@@ -62,9 +62,9 @@ export const FanHand: React.FC<FanHandProps> = ({
             className="transition-all duration-200 ease-out relative transform-gpu will-change-transform"
             style={{
               transform: isHovered
-                ? `translate(${geom.translateX}px, -20px) scale(1.1) rotate(0deg)`
+                ? `translate(${geom.translateX}px, -16px) scale(1.06) rotate(0deg)`
                 : isRecommended
-                ? `translate(${geom.translateX}px, ${geom.translateY - 8}px) scale(1.04) rotate(${geom.rotate}deg)`
+                ? `translate(${geom.translateX}px, ${geom.translateY - 4}px) scale(1.02) rotate(${geom.rotate}deg)`
                 : `translate(${geom.translateX}px, ${geom.translateY}px) rotate(${geom.rotate}deg)`,
               zIndex: isHovered ? 30 : isRecommended ? 25 : idx + 10,
               WebkitBackfaceVisibility: 'hidden',
@@ -73,7 +73,7 @@ export const FanHand: React.FC<FanHandProps> = ({
           >
             {/* Coach Sparkle Tag on Recommended Card */}
             {isRecommended && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-stone-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow-md flex items-center gap-0.5 whitespace-nowrap border border-amber-600/80 ring-1 ring-amber-300">
+              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-stone-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow-md flex items-center gap-0.5 whitespace-nowrap border border-amber-600/80 ring-1 ring-amber-300">
                 <Sparkles className="w-2.5 h-2.5 fill-current" />
                 <span>Jugar</span>
               </div>
