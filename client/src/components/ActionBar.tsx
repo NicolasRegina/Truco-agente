@@ -175,7 +175,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       )}
 
       {/* Main Cantos Grid */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 max-w-xl mx-auto px-1">
         {/* Envido Cantos (only when not in truco_pending, since in truco_pending it's shown above) */}
         {state.phase !== 'truco_pending' && can('CALL_ENVIDO') && (
           <ActionButton
@@ -297,15 +297,15 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl font-black text-xs sm:text-sm border shadow-lg transition-all flex items-center gap-1.5 active:scale-95
+        py-1 sm:py-2 px-2 sm:px-3.5 rounded-lg sm:rounded-xl font-black text-[11px] sm:text-sm border shadow-lg transition-all flex items-center gap-1 sm:gap-1.5 active:scale-95
         ${colorStyles}
         ${isRecommended ? 'recommend-glow ring-2 ring-amber-400' : ''}
       `}
     >
-      {isRecommended && <Sparkles className="w-3 h-3 fill-current text-amber-300" />}
+      {isRecommended && <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current text-amber-300" />}
       <span>{label}</span>
       {badge && (
-        <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 font-bold border border-white/20">
+        <span className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-black/40 font-bold border border-white/20">
           {badge}
         </span>
       )}

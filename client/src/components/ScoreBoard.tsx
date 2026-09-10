@@ -19,7 +19,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
   turn
 }) => {
   return (
-    <div className="bg-gradient-to-b from-[#2a170a] to-[#1a0e05] rounded-xl sm:rounded-2xl p-1.5 sm:p-3 text-amber-100 shadow-xl border border-amber-600/60 sm:border-2 max-w-sm sm:max-w-md w-full select-none relative overflow-hidden">
+    <div className="bg-gradient-to-b from-[#2a170a] to-[#1a0e05] rounded-xl sm:rounded-2xl p-1 sm:p-2.5 text-amber-100 shadow-xl border border-amber-600/60 sm:border-2 max-w-[310px] sm:max-w-md w-full select-none relative overflow-hidden">
       {/* Decorative brass corner bolts */}
       <div className="absolute top-1 left-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500/80 border border-amber-300 shadow"></div>
       <div className="absolute top-1 right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500/80 border border-amber-300 shadow"></div>
@@ -27,18 +27,18 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({
       <div className="absolute bottom-1 right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500/80 border border-amber-300 shadow"></div>
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-amber-700/50 pb-1 mb-1 sm:mb-2 px-1">
-        <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300 font-headline flex items-center gap-1">
+      <div className="flex items-center justify-between border-b border-amber-700/50 pb-0.5 mb-0.5 sm:mb-1.5 px-0.5 sm:px-1">
+        <span className="text-[9px] sm:text-xs font-black uppercase tracking-wider text-amber-300 font-headline flex items-center gap-1">
           <span>🪵</span> Anotador ({maxScore} pts)
         </span>
-        <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-200">
+        <div className="flex items-center gap-1 text-[9px] sm:text-[11px] text-amber-200">
           <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
           <span>Mano</span>
         </div>
       </div>
 
       {/* Players columns */}
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
+      <div className="grid grid-cols-2 gap-1 sm:gap-2.5">
         {/* P1 */}
         <PlayerScoreColumn
           name={p1Name}
@@ -81,24 +81,24 @@ const PlayerScoreColumn: React.FC<{
       }`}
     >
       {/* Player header */}
-      <div className="flex items-center justify-between gap-1 mb-0.5 sm:mb-1">
+      <div className="flex items-center justify-between gap-1 mb-0.5">
         <div className="flex items-center gap-1 overflow-hidden">
           {isMano && (
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 shrink-0 shadow" title="Mano de la ronda"></span>
           )}
-          <span className="font-extrabold text-[11px] sm:text-sm truncate text-amber-200">{name}</span>
+          <span className="font-extrabold text-[10px] sm:text-sm truncate text-amber-200">{name}</span>
         </div>
-        <span className="text-xs sm:text-base font-black text-amber-400 font-mono shrink-0">
+        <span className="text-[11px] sm:text-base font-black text-amber-400 font-mono shrink-0">
           {points}
         </span>
       </div>
 
       {/* Fósforos Section */}
       {is30Points ? (
-        <div className="space-y-0.5 sm:space-y-1">
+        <div className="space-y-0.5">
           {/* Malas */}
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[8px] sm:text-[9px] text-amber-400/80 font-bold uppercase tracking-tight">
+            <span className="text-[7px] sm:text-[9px] text-amber-400/80 font-bold uppercase tracking-tight">
               M ({malasPoints}/15)
             </span>
             <FosforosRow count={malasPoints} maxBoxes={3} />
@@ -106,7 +106,7 @@ const PlayerScoreColumn: React.FC<{
 
           {/* Buenas */}
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[8px] sm:text-[9px] text-amber-300 font-bold uppercase tracking-tight">
+            <span className="text-[7px] sm:text-[9px] text-amber-300 font-bold uppercase tracking-tight">
               B ({buenasPoints}/15)
             </span>
             <FosforosRow count={buenasPoints} maxBoxes={3} />
@@ -114,7 +114,7 @@ const PlayerScoreColumn: React.FC<{
         </div>
       ) : (
         <div className="flex items-center justify-between gap-1">
-          <span className="text-[8px] sm:text-[9px] text-amber-400/80 font-bold uppercase tracking-tight">
+          <span className="text-[7px] sm:text-[9px] text-amber-400/80 font-bold uppercase tracking-tight">
             Pts ({points}/15)
           </span>
           <FosforosRow count={points} maxBoxes={3} />
@@ -137,7 +137,7 @@ const FosforosRow: React.FC<{ count: number; maxBoxes: number }> = ({ count, max
 // Authentic Argentine Matchstick Box with sulfur heads & wood texture
 const RealisticFosforoBox: React.FC<{ count: number }> = ({ count }) => {
   return (
-    <div className="w-5 h-5 sm:w-7 sm:h-7 bg-stone-900/90 rounded border border-amber-900/60 relative p-0.5 flex items-center justify-center shadow-inner shrink-0">
+    <div className="w-4 h-4 sm:w-7 sm:h-7 bg-stone-900/90 rounded border border-amber-900/60 relative p-0.5 flex items-center justify-center shadow-inner shrink-0">
       <svg className="w-full h-full drop-shadow-sm" viewBox="0 0 34 34">
         {/* Matchstick 1: Left Vertical */}
         {count >= 1 && (

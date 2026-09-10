@@ -423,7 +423,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
               }
             : undefined
         }
-        className={`flex-1 relative flex flex-col justify-between p-1.5 sm:p-3 ${currentTheme.colors.tableFelt} bg-felt-texture overflow-hidden transition-colors duration-500 shadow-[inset_0_0_80px_rgba(0,0,0,0.7)]`}
+        className={`flex-1 relative flex flex-col justify-between p-1 sm:p-3 ${currentTheme.colors.tableFelt} bg-felt-texture overflow-y-auto sm:overflow-hidden transition-colors duration-500 shadow-[inset_0_0_80px_rgba(0,0,0,0.7)]`}
       >
         {/* Overhead tavern spotlight glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[450px] h-[250px] bg-amber-400/15 blur-3xl pointer-events-none rounded-full"></div>
@@ -439,7 +439,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         )}
 
         {/* Opponent Area (Top) */}
-        <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
+        <div className="flex flex-col items-center gap-0.5 sm:gap-1.5 z-10 shrink-0">
           {/* Opponent Info & Speech Bubble */}
           <div className="flex items-center gap-1.5">
             <div className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-black/60 backdrop-blur-md rounded-full border border-amber-800/50 text-[11px] sm:text-xs font-bold text-amber-200 flex items-center gap-1.5 shadow-lg">
@@ -468,9 +468,9 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
 
         {/* Center Arena: Scoreboard & 3 Trick Zones */}
-        <div className="flex-1 flex flex-col items-center justify-center my-0.5 sm:my-1 z-10 w-full max-w-2xl mx-auto">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center my-0 sm:my-1 z-10 w-full max-w-2xl mx-auto">
           {/* ScoreBoard */}
-          <div className="mb-1 sm:mb-2 w-full max-w-xs sm:max-w-sm">
+          <div className="mb-0.5 sm:mb-2 w-full max-w-[310px] sm:max-w-sm">
             <ScoreBoard
               score={state.score}
               maxScore={state.config.maxScore}
@@ -482,7 +482,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           </div>
 
           {/* 3 Trick Drop Zones (Compact on Mobile) */}
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full max-w-md px-1 sm:px-2">
+          <div className="grid grid-cols-3 gap-1 sm:gap-3 w-full max-w-md px-1 sm:px-2">
             {[0, 1, 2].map((trickIdx) => {
               const trick = state.tricks[trickIdx];
               const isCurrentTrick = state.currentTrickIndex === trickIdx;
@@ -492,11 +492,11 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                 <div
                   key={trickIdx}
                   className={`
-                    p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-black/40 border flex flex-col items-center justify-center min-h-[64px] sm:min-h-[105px] relative transition-all shadow-inner
+                    p-0.5 sm:p-2 rounded-lg sm:rounded-2xl bg-black/40 border flex flex-col items-center justify-center min-h-[46px] sm:min-h-[90px] relative transition-all shadow-inner
                     ${isCurrentTrick ? 'border-amber-400 bg-black/55 ring-1 sm:ring-2 ring-amber-400/40 shadow-lg scale-102' : 'border-amber-950/40'}
                   `}
                 >
-                  <span className="text-[9px] sm:text-xs font-black text-amber-300/90 mb-0.5 uppercase tracking-wider">
+                  <span className="text-[8px] sm:text-xs font-black text-amber-300/90 mb-0.5 uppercase tracking-wider">
                     {trickIdx + 1}ª Mano
                   </span>
 
@@ -535,32 +535,32 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
 
         {/* Player Area (Bottom with safe-area padding for iPhone Home Indicator) */}
-        <div className="flex flex-col items-center gap-0.5 z-10 pb-[max(env(safe-area-inset-bottom,0px),8px)]">
+        <div className="flex flex-col items-center gap-0.5 z-10 shrink-0 w-full pb-[max(env(safe-area-inset-bottom,0px),4px)]">
           {/* Coach Advice Floating Bubble / Snackbar (Modo Aprendiz) */}
           {coachAdvice && (
             <div
-              className="group relative mb-1 mx-auto max-w-[95vw] sm:max-w-md px-3 py-1.5 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95 border-2 border-amber-400 text-amber-100 rounded-2xl shadow-2xl flex items-start gap-2 text-xs animate-speech z-40 backdrop-blur-md cursor-pointer transition-all duration-200 hover:border-amber-300 select-none"
+              className="group relative mb-0.5 sm:mb-1 mx-auto max-w-[95vw] sm:max-w-md px-2.5 py-1 sm:px-3 sm:py-1.5 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95 border border-amber-400 sm:border-2 text-amber-100 rounded-xl sm:rounded-2xl shadow-2xl flex items-start gap-1.5 sm:gap-2 text-xs animate-speech z-40 backdrop-blur-md cursor-pointer transition-all duration-200 hover:border-amber-300 select-none"
               onClick={() => setIsAdviceExpanded(prev => !prev)}
               title={coachAdvice.explanation}
             >
-              <div className="p-1 rounded-lg bg-amber-400 text-stone-950 shrink-0 shadow mt-0.5">
-                <GraduationCap className="w-4 h-4" />
+              <div className="p-0.5 sm:p-1 rounded-md sm:rounded-lg bg-amber-400 text-stone-950 shrink-0 shadow mt-0.5">
+                <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
 
               <div className="flex-1 min-w-0 pr-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-black text-amber-300 text-xs">{coachAdvice.title}</span>
-                  <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase font-bold">
+                  <span className="font-black text-amber-300 text-[11px] sm:text-xs">{coachAdvice.title}</span>
+                  <span className="text-[8px] sm:text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase font-bold">
                     {coachAdvice.badge}
                   </span>
-                  <span className="text-[9px] text-amber-400/80 ml-auto font-medium hidden sm:inline">
+                  <span className="text-[8px] sm:text-[9px] text-amber-400/80 ml-auto font-medium hidden sm:inline">
                     (Hover para detalle)
                   </span>
-                  <span className="text-[9px] text-amber-400/80 ml-auto font-medium sm:hidden">
+                  <span className="text-[8px] sm:text-[9px] text-amber-400/80 ml-auto font-medium sm:hidden">
                     {isAdviceExpanded ? '▲ Menos' : '▼ Ver todo'}
                   </span>
                 </div>
-                <p className={`text-[10px] sm:text-[11px] text-stone-200 leading-snug mt-0.5 ${isAdviceExpanded ? 'break-words' : 'line-clamp-2 sm:line-clamp-1'}`}>
+                <p className={`text-[9px] sm:text-[11px] text-stone-200 leading-tight mt-0.5 ${isAdviceExpanded ? 'break-words' : 'line-clamp-1'}`}>
                   {coachAdvice.explanation}
                 </p>
               </div>
@@ -570,7 +570,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                   e.stopPropagation();
                   setCoachAdvice(null);
                 }}
-                className="p-1 text-stone-400 hover:text-white transition-colors shrink-0 mt-0.5"
+                className="p-0.5 sm:p-1 text-stone-400 hover:text-white transition-colors shrink-0 mt-0.5"
                 title="Cerrar consejo"
               >
                 <X className="w-3.5 h-3.5" />
@@ -659,7 +659,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
 
         {/* Left Side: Interactive Criollo Mate */}
-        <div className="absolute bottom-2.5 left-2 sm:bottom-4 sm:left-4 z-30 scale-85 sm:scale-100 origin-bottom-left">
+        <div className="absolute bottom-1.5 left-1.5 sm:bottom-4 sm:left-4 z-30 scale-75 sm:scale-100 origin-bottom-left pointer-events-auto">
           <InteractiveMate
             mateStyle={profile?.equippedMate}
             onDrink={() => {
@@ -669,7 +669,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         </div>
 
         {/* Right Side: Emote Wheel Button */}
-        <div className="absolute bottom-2.5 right-2 sm:bottom-4 sm:right-4 z-30 scale-85 sm:scale-100 origin-bottom-right">
+        <div className="absolute bottom-1.5 right-1.5 sm:bottom-4 sm:right-4 z-30 scale-75 sm:scale-100 origin-bottom-right pointer-events-auto">
           <ChatEmotes
             onSendMessage={(text) => {
               trackEvent('send_emote');

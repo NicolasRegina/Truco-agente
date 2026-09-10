@@ -56,9 +56,9 @@ export const CardView: React.FC<CardViewProps> = ({
   const cardBackSrc = `/card_backs/card_${equippedBack}.jpg`;
 
   const sizeClasses = {
-    sm: 'w-14 h-21 sm:w-16 sm:h-24 text-[10px] sm:text-xs rounded-md',
-    md: 'w-[86px] h-[129px] sm:w-28 sm:h-40 text-xs sm:text-sm rounded-lg',
-    lg: 'w-28 h-42 sm:w-36 sm:h-52 text-sm sm:text-base rounded-xl'
+    sm: 'w-11 h-[68px] sm:w-16 sm:h-24 text-[8px] sm:text-xs rounded-md',
+    md: 'w-[72px] h-[108px] sm:w-28 sm:h-40 text-xs sm:text-sm rounded-lg',
+    lg: 'w-24 h-36 sm:w-36 sm:h-52 text-sm sm:text-base rounded-xl'
   }[size];
 
   // Render card back (flipped, hidden or covered/tapada)
