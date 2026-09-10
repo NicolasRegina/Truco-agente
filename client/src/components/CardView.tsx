@@ -74,6 +74,7 @@ export const CardView: React.FC<CardViewProps> = ({
             (e.target as HTMLImageElement).src = '/card_backs/card_clasico.jpg';
           }}
           alt="Dorso de Carta"
+          style={{ transform: 'scale(1.04)' }}
           className="w-full h-full object-cover card-img-crisp pointer-events-none select-none"
         />
         {card?.isCovered && (
@@ -119,6 +120,7 @@ export const CardView: React.FC<CardViewProps> = ({
           alt={`${card.value} de ${card.suit}`}
           loading="eager"
           decoding="async"
+          style={{ transform: 'scale(1.08)' }}
           className="w-full h-full object-cover card-img-crisp pointer-events-none select-none"
         />
       </div>
