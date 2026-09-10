@@ -177,6 +177,9 @@ export function useGameEngine({
 
     return () => {
       ws.close();
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+      }
     };
   }, [mode, roomId, isMatchmaking]);
 

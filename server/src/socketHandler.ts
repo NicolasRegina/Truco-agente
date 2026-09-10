@@ -5,9 +5,6 @@ import { RoomManager } from './roomManager';
 const MAX_MESSAGE_SIZE = 4096; // 4KB max payload size
 
 export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
-  let currentRoomId: string | null = null;
-  let currentRole: 'p1' | 'p2' | null = null;
-
   ws.on('message', (rawData: string) => {
     try {
       if (rawData.length > MAX_MESSAGE_SIZE) {
@@ -37,11 +34,7 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
             p2Name: 'Esperando...'
           };
 
-          const res = roomManager.findMatch(playerName, safeConfig as any, ws);
-          if (res.matched && res.room) {
-            currentRoomId = res.room.id;
-            currentRole = res.room.p2?.socket === ws ? 'p2' : 'p1';
-          }
+          roomManager.findMatch(playerName, safeConfig as any, ws);
           break;
         }
 
@@ -60,8 +53,6 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
           };
 
           const { room, token } = roomManager.createRoom(playerName, safeConfig as any, ws);
-          currentRoomId = room.id;
-          currentRole = 'p1';
 
           roomManager.send(ws, {
             type: 'ROOM_CREATED',
@@ -94,9 +85,6 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
             });
             return;
           }
-
-          currentRoomId = result.room.id;
-          currentRole = result.playerId;
 
           roomManager.send(ws, {
             type: 'ROOM_JOINED',
@@ -133,9 +121,6 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
             });
             return;
           }
-
-          currentRoomId = room.id;
-          currentRole = playerId;
 
           roomManager.send(ws, {
             type: 'ROOM_JOINED',
