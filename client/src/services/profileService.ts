@@ -96,7 +96,7 @@ export const DEFAULT_CATALOG: StoreItem[] = [
 ];
 
 function createDefaultFallbackProfile(deviceToken: string): PlayerProfile {
-  const savedName = typeof localStorage !== 'undefined' ? localStorage.getItem('truco_saved_player_name') || 'Leo Messi' : 'Leo Messi';
+  const savedName = typeof localStorage !== 'undefined' ? localStorage.getItem('truco_saved_player_name') || 'Nico' : 'Nico';
   return {
     deviceToken,
     playerName: savedName,
@@ -172,21 +172,95 @@ class ProfileClientService {
     return this.currentProfile;
   }
 
+  public async healServer(profileToSync?: PlayerProfile): Promise<PlayerProfile | null> {
+    try {
+      const p = profileToSync || this.currentProfile;
+      const res = await fetch(`${SERVER_URL}/api/profile/heal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: this.token,
+          playerName: p.playerName,
+          coins: p.coins,
+          coinsEarnedToday: p.coinsEarnedToday,
+          unlockedItems: p.unlockedItems,
+          equippedTitle: p.equippedTitle,
+          equippedBorder: p.equippedBorder,
+          equippedMate: p.equippedMate,
+          equippedCardBack: p.equippedCardBack,
+          missions: p.missions
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.profile) {
+          this.setAndBroadcast(data.profile);
+          return data.profile;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not heal server profile, keeping local cache', e);
+    }
+    return null;
+  }
+
   public async refresh(): Promise<PlayerProfile> {
     try {
-      const savedName = (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || this.currentProfile.playerName || 'Leo Messi';
+      const savedName = (typeof localStorage !== 'undefined' && localStorage.getItem('truco_saved_player_name')) || this.currentProfile.playerName || 'Nico';
       const res = await fetch(`${SERVER_URL}/api/profile?token=${encodeURIComponent(this.token)}&name=${encodeURIComponent(savedName)}`);
       if (res.ok) {
-        const data: PlayerProfile = await res.json();
-        // If server profile returned an accidental 'Gaucho' or empty, but local has a custom name, preserve local name and heal server!
-        if ((!data.playerName || data.playerName === 'Gaucho') && savedName && savedName !== 'Gaucho') {
-          data.playerName = savedName;
-          this.updatePlayerName(savedName).catch(() => {});
-        } else if (data.playerName && data.playerName !== 'Gaucho' && typeof localStorage !== 'undefined') {
-          localStorage.setItem('truco_saved_player_name', data.playerName);
+        const serverData: PlayerProfile = await res.json();
+
+        // Check if server lost progress (e.g. backend redeployed on Render with ephemeral disk)
+        const localCoins = Number(this.currentProfile.coins || 0);
+        const serverCoins = Number(serverData.coins || 0);
+        const localUnlocked = new Set(this.currentProfile.unlockedItems || []);
+        const serverUnlocked = new Set(serverData.unlockedItems || []);
+        const hasMissingUnlocked = [...localUnlocked].some(item => !serverUnlocked.has(item));
+        const serverLostProgress = (localCoins > serverCoins) || hasMissingUnlocked;
+
+        // Determine clean nickname (ignore accidental default fallbacks)
+        const cleanSavedName = (savedName && savedName !== 'Gaucho' && savedName !== 'Leo Messi' && savedName !== 'Jugador 1') ? savedName : '';
+        const effectiveName = cleanSavedName || (serverData.playerName && serverData.playerName !== 'Leo Messi' && serverData.playerName !== 'Gaucho' ? serverData.playerName : (this.currentProfile.playerName || 'Nico'));
+
+        if (serverLostProgress) {
+          console.warn('[ProfileService] Servidor con progreso inferior al local detectado (posible reinicio de Render). Curando servidor...');
+          const mergedUnlocked = Array.from(new Set([...(this.currentProfile.unlockedItems || []), ...(serverData.unlockedItems || [])]));
+          const mergedCoins = Math.max(localCoins, serverCoins);
+          const mergedEarnedToday = Math.max(this.currentProfile.coinsEarnedToday || 0, serverData.coinsEarnedToday || 0);
+
+          const healedProfile: PlayerProfile = {
+            ...serverData,
+            playerName: effectiveName,
+            coins: mergedCoins,
+            coinsEarnedToday: mergedEarnedToday,
+            unlockedItems: mergedUnlocked,
+            equippedTitle: (this.currentProfile.equippedTitle && mergedUnlocked.includes(this.currentProfile.equippedTitle)) ? this.currentProfile.equippedTitle : serverData.equippedTitle,
+            equippedBorder: (this.currentProfile.equippedBorder && mergedUnlocked.includes(this.currentProfile.equippedBorder)) ? this.currentProfile.equippedBorder : serverData.equippedBorder,
+            equippedMate: (this.currentProfile.equippedMate && mergedUnlocked.includes(this.currentProfile.equippedMate)) ? this.currentProfile.equippedMate : serverData.equippedMate,
+            equippedCardBack: (this.currentProfile.equippedCardBack && mergedUnlocked.includes(this.currentProfile.equippedCardBack)) ? this.currentProfile.equippedCardBack : serverData.equippedCardBack,
+          };
+
+          if (typeof localStorage !== 'undefined' && effectiveName) {
+            localStorage.setItem('truco_saved_player_name', effectiveName);
+          }
+
+          this.setAndBroadcast(healedProfile);
+          // Heal the server asynchronously
+          this.healServer(healedProfile).catch(() => {});
+          return healedProfile;
         }
-        this.setAndBroadcast(data);
-        return data;
+
+        // Server has equal or greater progress: accept it, but preserve valid saved player name
+        if (effectiveName) {
+          serverData.playerName = effectiveName;
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('truco_saved_player_name', effectiveName);
+          }
+        }
+
+        this.setAndBroadcast(serverData);
+        return serverData;
       }
     } catch (e) {
       console.warn('Could not refresh profile from server, using local cache / offline fallback', e);

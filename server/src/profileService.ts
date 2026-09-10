@@ -211,7 +211,7 @@ export class ProfileService {
     let player = db.prepare('SELECT * FROM players WHERE device_token = ?').get(deviceToken) as any;
 
     const trimmedInputName = (playerName || '').trim();
-    const effectiveName = (trimmedInputName && trimmedInputName !== 'Gaucho') ? trimmedInputName : 'Leo Messi';
+    const effectiveName = (trimmedInputName && trimmedInputName !== 'Gaucho' && trimmedInputName !== 'Leo Messi') ? trimmedInputName : 'Nico';
 
     if (!player) {
       const defaultUnlocked = JSON.stringify(['mate_calabaza', 'title_novato', 'border_default', 'card_clasico']);
@@ -246,8 +246,8 @@ export class ProfileService {
 
       player = db.prepare('SELECT * FROM players WHERE device_token = ?').get(deviceToken) as any;
     } else {
-      // Self-heal: if the existing player record has 'Gaucho' or empty name, and an actual custom name is provided, update it!
-      if (trimmedInputName && trimmedInputName !== 'Gaucho' && (!player.player_name || player.player_name === 'Gaucho')) {
+      // Self-heal: if the existing player record has 'Gaucho' or 'Leo Messi' or empty name, and an actual custom name is provided, update it!
+      if (trimmedInputName && trimmedInputName !== 'Gaucho' && (!player.player_name || player.player_name === 'Gaucho' || player.player_name === 'Leo Messi')) {
         db.prepare('UPDATE players SET player_name = ?, updated_at = ? WHERE device_token = ?').run(trimmedInputName, Date.now(), deviceToken);
         player.player_name = trimmedInputName;
       }
@@ -327,6 +327,146 @@ export class ProfileService {
       missions,
       allMissionsClaimedToday: allClaimed,
       catalog: Object.values(STORE_CATALOG)
+    };
+  }
+
+  public static healOrRestorePlayer(payload: {
+    deviceToken: string;
+    playerName?: string;
+    coins?: number;
+    coinsEarnedToday?: number;
+    unlockedItems?: string[];
+    equippedTitle?: string;
+    equippedBorder?: string;
+    equippedMate?: string;
+    equippedCardBack?: string;
+    missions?: Array<{ id: string; progress?: number; target?: number; completed?: boolean; claimed?: boolean }>;
+  }): { success: boolean; profile: PlayerProfileDTO } {
+    const {
+      deviceToken,
+      playerName,
+      coins,
+      coinsEarnedToday,
+      unlockedItems,
+      equippedTitle,
+      equippedBorder,
+      equippedMate,
+      equippedCardBack,
+      missions
+    } = payload;
+
+    const today = getTodayDateString();
+    const player = this.ensurePlayer(deviceToken, playerName);
+
+    // Current DB values
+    const currentCoins = Number(player.coins || 0);
+    let currentUnlocked: string[] = [];
+    try {
+      currentUnlocked = JSON.parse(player.unlocked_items || '[]');
+    } catch {
+      currentUnlocked = ['mate_calabaza', 'title_novato', 'border_default', 'card_clasico'];
+    }
+
+    // Merge coins: preserve whichever is higher (never reduce coins during heal)
+    const incomingCoins = typeof coins === 'number' && !isNaN(coins) && coins >= 0 ? Math.floor(coins) : 0;
+    const finalCoins = Math.max(currentCoins, incomingCoins);
+
+    // Merge coins earned today
+    const currentEarnedToday = Number(player.coins_earned_today || 0);
+    const incomingEarnedToday = typeof coinsEarnedToday === 'number' && !isNaN(coinsEarnedToday) && coinsEarnedToday >= 0 ? Math.floor(coinsEarnedToday) : 0;
+    const finalEarnedToday = Math.max(currentEarnedToday, incomingEarnedToday);
+
+    // Merge unlocked items: union of both
+    const incomingUnlocked = Array.isArray(unlockedItems) ? unlockedItems.filter(Boolean) : [];
+    const mergedUnlocked = Array.from(new Set([...currentUnlocked, ...incomingUnlocked]));
+
+    // Player name: prioritize incoming if not generic fallback
+    const trimmedName = (playerName || '').trim();
+    const finalName = (trimmedName && trimmedName !== 'Gaucho' && trimmedName !== 'Leo Messi' && trimmedName !== 'Jugador 1')
+      ? trimmedName
+      : (player.player_name && player.player_name !== 'Leo Messi' ? player.player_name : 'Nico');
+
+    // Equipped items: validate they belong to unlocked items
+    let finalTitle = player.equipped_title;
+    if (equippedTitle) {
+      const matchItem = Object.values(STORE_CATALOG).find(i => i.category === 'title' && i.name === equippedTitle);
+      if (matchItem && mergedUnlocked.includes(matchItem.id)) {
+        finalTitle = equippedTitle;
+      }
+    }
+
+    let finalBorder = player.equipped_border;
+    if (equippedBorder) {
+      const fullId = `border_${equippedBorder}`;
+      if (mergedUnlocked.includes(fullId) || equippedBorder === 'default') {
+        finalBorder = equippedBorder;
+      }
+    }
+
+    let finalMate = player.equipped_mate;
+    if (equippedMate) {
+      const fullId = `mate_${equippedMate}`;
+      if (mergedUnlocked.includes(fullId) || equippedMate === 'calabaza') {
+        finalMate = equippedMate;
+      }
+    }
+
+    let finalCardBack = player.equipped_card_back;
+    if (equippedCardBack) {
+      const fullId = `card_${equippedCardBack}`;
+      if (mergedUnlocked.includes(fullId) || equippedCardBack === 'clasico') {
+        finalCardBack = equippedCardBack;
+      }
+    }
+
+    db.prepare(`
+      UPDATE players
+      SET player_name = ?,
+          coins = ?,
+          coins_earned_today = ?,
+          unlocked_items = ?,
+          equipped_title = ?,
+          equipped_border = ?,
+          equipped_mate = ?,
+          equipped_card_back = ?,
+          updated_at = ?
+      WHERE device_token = ?
+    `).run(
+      finalName,
+      finalCoins,
+      finalEarnedToday,
+      JSON.stringify(mergedUnlocked),
+      finalTitle,
+      finalBorder,
+      finalMate,
+      finalCardBack,
+      Date.now(),
+      deviceToken
+    );
+
+    // Merge missions progress/claimed if provided for today
+    if (Array.isArray(missions)) {
+      for (const m of missions) {
+        if (!m || !m.id) continue;
+        const target = typeof m.target === 'number' ? m.target : 1;
+        const progress = typeof m.progress === 'number' ? m.progress : 0;
+        const completed = m.completed ? 1 : 0;
+        const claimed = m.claimed ? 1 : 0;
+
+        db.prepare(`
+          INSERT INTO player_missions (device_token, date, mission_id, progress, target, completed, claimed)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(device_token, date, mission_id) DO UPDATE SET
+            progress = MAX(player_missions.progress, excluded.progress),
+            completed = MAX(player_missions.completed, excluded.completed),
+            claimed = MAX(player_missions.claimed, excluded.claimed)
+        `).run(deviceToken, today, m.id, progress, target, completed, claimed);
+      }
+    }
+
+    return {
+      success: true,
+      profile: this.getProfile(deviceToken)
     };
   }
 
