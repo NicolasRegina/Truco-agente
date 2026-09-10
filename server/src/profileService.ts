@@ -367,17 +367,22 @@ export class ProfileService {
       currentUnlocked = ['mate_calabaza', 'title_novato', 'border_default', 'card_clasico'];
     }
 
-    // Merge coins: preserve whichever is higher (never reduce coins during heal)
+    // Merge coins: preserve whichever is higher, with sanity maximum limit (500) to prevent tampering
+    const MAX_HEAL_COINS = 500;
     const incomingCoins = typeof coins === 'number' && !isNaN(coins) && coins >= 0 ? Math.floor(coins) : 0;
-    const finalCoins = Math.max(currentCoins, incomingCoins);
+    const safeIncomingCoins = Math.min(incomingCoins, MAX_HEAL_COINS);
+    const finalCoins = Math.max(currentCoins, safeIncomingCoins);
 
-    // Merge coins earned today
+    // Merge coins earned today (capped to daily max 20)
     const currentEarnedToday = Number(player.coins_earned_today || 0);
     const incomingEarnedToday = typeof coinsEarnedToday === 'number' && !isNaN(coinsEarnedToday) && coinsEarnedToday >= 0 ? Math.floor(coinsEarnedToday) : 0;
-    const finalEarnedToday = Math.max(currentEarnedToday, incomingEarnedToday);
+    const finalEarnedToday = Math.min(20, Math.max(currentEarnedToday, incomingEarnedToday));
 
-    // Merge unlocked items: union of both
-    const incomingUnlocked = Array.isArray(unlockedItems) ? unlockedItems.filter(Boolean) : [];
+    // Merge unlocked items: union of both, validated against actual store catalog
+    const validCatalogIds = new Set(Object.keys(STORE_CATALOG));
+    const incomingUnlocked = Array.isArray(unlockedItems)
+      ? unlockedItems.filter(id => typeof id === 'string' && validCatalogIds.has(id))
+      : [];
     const mergedUnlocked = Array.from(new Set([...currentUnlocked, ...incomingUnlocked]));
 
     // Player name: prioritize incoming if not generic fallback

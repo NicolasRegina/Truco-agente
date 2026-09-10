@@ -2,6 +2,22 @@ import { WebSocket } from 'ws';
 import { ClientMessage } from './protocol';
 import { RoomManager } from './roomManager';
 
+const ALLOWED_ACTION_TYPES = new Set([
+  'PLAY_CARD',
+  'CALL_ENVIDO',
+  'CALL_REAL_ENVIDO',
+  'CALL_FALTA_ENVIDO',
+  'CALL_FLOR',
+  'CALL_CONTRAFLOR',
+  'CALL_CONTRAFLOR_AL_RESTO',
+  'CALL_TRUCO',
+  'CALL_RETRUCO',
+  'CALL_VALE_CUATRO',
+  'QUIERO',
+  'NO_QUIERO',
+  'IRSE_AL_MAZO'
+]);
+
 const MAX_MESSAGE_SIZE = 4096; // 4KB max payload size
 
 export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
@@ -146,8 +162,13 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
           }
 
           const action = msg.payload?.action;
-          if (!action || typeof action.type !== 'string') {
-            roomManager.send(ws, { type: 'ERROR', payload: { message: 'Acción malformada' } });
+          if (!action || typeof action.type !== 'string' || !ALLOWED_ACTION_TYPES.has(action.type)) {
+            roomManager.send(ws, { type: 'ERROR', payload: { message: 'Acción no permitida o inválida' } });
+            return;
+          }
+
+          if (action.type === 'PLAY_CARD' && (!action.card || typeof action.card.id !== 'string')) {
+            roomManager.send(ws, { type: 'ERROR', payload: { message: 'Carta requerida para jugar' } });
             return;
           }
 
@@ -173,8 +194,35 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
         case 'CHAT_MESSAGE': {
           const session = roomManager.getSessionBySocket(ws);
           if (!session) return;
+
+          // Anti-spam rate limiting: max 5 chat messages per 3s per socket
+          const now = Date.now();
+          const chatMeta = (ws as any)._chatMeta || { count: 0, resetAt: now + 3000 };
+          if (now > chatMeta.resetAt) {
+            chatMeta.count = 1;
+            chatMeta.resetAt = now + 3000;
+          } else {
+            chatMeta.count++;
+          }
+          (ws as any)._chatMeta = chatMeta;
+
+          if (chatMeta.count > 5) {
+            roomManager.send(ws, { type: 'ERROR', payload: { message: 'Por favor no envíes mensajes tan rápido.' } });
+            return;
+          }
+
+          // Strip HTML tags, limit length, prevent control characters
+          const rawText = String(msg.payload?.text || '');
+          const cleanText = rawText
+            .replace(/[<>]/g, '')
+            .replace(/[\x00-\x1F\x7F]/g, '')
+            .slice(0, 150)
+            .trim();
+
+          if (!cleanText) return;
+
           const senderName = session.role === 'p1' ? session.room.p1.name : (session.room.p2?.name || 'P2');
-          roomManager.broadcastChat(session.room, senderName, String(msg.payload?.text || ''));
+          roomManager.broadcastChat(session.room, senderName, cleanText);
           break;
         }
 

@@ -263,17 +263,17 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center pt-[max(env(safe-area-inset-top,0px),24px)] pb-[max(env(safe-area-inset-bottom,0px),24px)] px-3 sm:px-4 animate-speech">
-      <div className="bg-stone-950 border-2 border-amber-500/60 rounded-3xl max-w-2xl w-full text-amber-100 shadow-[0_25px_60px_rgba(0,0,0,0.9)] flex flex-col h-[75vh] sm:h-[80vh] max-h-[75vh] sm:max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-2.5 sm:p-4 animate-speech">
+      <div className="bg-stone-950 border border-amber-500/50 rounded-2xl sm:rounded-3xl max-w-2xl w-full text-amber-100 shadow-2xl flex flex-col h-[82dvh] sm:h-[76vh] max-h-[86dvh] sm:max-h-[78vh] overflow-hidden">
         
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 border-b border-amber-900/60 bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40">
+        <div className="flex items-center justify-between px-3.5 sm:px-6 py-2 sm:py-2.5 border-b border-amber-900/60 bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1 sm:p-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40">
               <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-xl font-black text-amber-300 font-headline tracking-wide">
+              <h2 className="text-sm sm:text-lg font-black text-amber-300 font-headline tracking-wide">
                 Perfil & Tienda
               </h2>
               <span className="text-[10px] sm:text-[11px] text-amber-200/80 flex items-center gap-1 font-mono">
@@ -287,7 +287,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 sm:p-2 rounded-full bg-stone-800/80 hover:bg-stone-700 text-stone-300 transition-colors"
+            className="p-1.5 rounded-full bg-stone-800/80 hover:bg-stone-700 text-stone-300 transition-colors"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -297,40 +297,40 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
         <div className="grid grid-cols-3 border-b border-amber-900/50 bg-stone-900/40 text-xs sm:text-sm font-bold shrink-0">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`py-2.5 flex items-center justify-center gap-1.5 transition-colors border-b-2 ${
+            className={`py-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 ${
               activeTab === 'profile'
                 ? 'border-amber-400 text-amber-300 bg-amber-950/30'
                 : 'border-transparent text-stone-400 hover:text-stone-200'
             }`}
           >
-            <User className="w-4 h-4" />
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Mi Perfil</span>
           </button>
 
           <button
             onClick={() => setActiveTab('missions')}
-            className={`py-2.5 flex items-center justify-center gap-1.5 transition-colors border-b-2 relative ${
+            className={`py-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 relative ${
               activeTab === 'missions'
                 ? 'border-amber-400 text-amber-300 bg-amber-950/30'
                 : 'border-transparent text-stone-400 hover:text-stone-200'
             }`}
           >
-            <Target className="w-4 h-4" />
+            <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Misiones Diarias</span>
             {profile.missions.some(m => m.completed && !m.claimed) && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute top-2 right-4"></span>
+              <span className="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-amber-400/40 absolute top-2 right-2 sm:right-4"></span>
             )}
           </button>
 
           <button
             onClick={() => setActiveTab('bazar')}
-            className={`py-2.5 flex items-center justify-center gap-1.5 transition-colors border-b-2 ${
+            className={`py-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 ${
               activeTab === 'bazar'
                 ? 'border-amber-400 text-amber-300 bg-amber-950/30'
                 : 'border-transparent text-stone-400 hover:text-stone-200'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Tienda</span>
           </button>
         </div>
@@ -345,13 +345,13 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
 
         {/* Tab 1: Mi Perfil */}
         {activeTab === 'profile' && (
-          <div className="p-3.5 sm:p-5 overflow-y-auto space-y-4 flex-1 min-h-0 overscroll-contain">
+          <div className="p-3 sm:p-4.5 overflow-y-auto space-y-3 sm:space-y-3.5 flex-1 min-h-0 overscroll-contain">
             {/* Identity Banner */}
-            <div className="bg-stone-900/80 border border-amber-900/60 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
-              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-950/60 border-2 ${getBorderClasses(profile.equippedBorder)} flex items-center justify-center text-3xl shadow-inner`}>
+            <div className="bg-stone-900/80 border border-amber-900/60 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+              <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-950/60 border-2 ${getBorderClasses(profile.equippedBorder)} flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0`}>
                 🧉
               </div>
-              <div className="text-center sm:text-left flex-1">
+              <div className="text-center sm:text-left flex-1 min-w-0">
                 {editingName ? (
                   <div className="flex flex-col gap-1 mb-1 items-center sm:items-start animate-speech">
                     <div className="flex items-center gap-1.5">
@@ -393,7 +393,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    <h3 className="text-xl font-black text-amber-200 font-headline">{profile.playerName}</h3>
+                    <h3 className="text-lg sm:text-xl font-black text-amber-200 font-headline truncate">{profile.playerName}</h3>
                     <button
                       onClick={() => {
                         setNameInput(profile.playerName || '');
@@ -410,15 +410,15 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                 <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/40">
                   {profile.equippedTitle}
                 </span>
-                <p className="text-[11px] text-stone-400 mt-1.5">
-                  Mate en mesa: <strong className="text-stone-200 capitalize">{profile.equippedMate}</strong> • Dorso: <strong className="text-stone-200 capitalize">{profile.equippedCardBack}</strong>
+                <p className="text-[11px] text-stone-400 mt-1">
+                  Mate: <strong className="text-stone-200 capitalize">{profile.equippedMate}</strong> • Dorso: <strong className="text-stone-200 capitalize">{profile.equippedCardBack}</strong>
                 </p>
               </div>
 
-              <div className="bg-black/40 border border-amber-900/40 rounded-xl p-3 text-center sm:text-right shrink-0">
+              <div className="bg-black/40 border border-amber-900/40 rounded-xl p-2.5 sm:p-3 text-center sm:text-right shrink-0">
                 <span className="text-[10px] text-amber-400 uppercase font-bold block">Monedas Criollas</span>
-                <span className="text-2xl font-black text-amber-300 flex items-center justify-center sm:justify-end gap-1 font-mono">
-                  <Coins className="w-5 h-5 text-amber-400 fill-amber-400" /> {profile.coins}
+                <span className="text-xl sm:text-2xl font-black text-amber-300 flex items-center justify-center sm:justify-end gap-1 font-mono">
+                  <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400" /> {profile.coins}
                 </span>
                 <span className="text-[9px] text-stone-400 block mt-0.5">
                   Hoy por jugar: {profile.coinsEarnedToday}/20 🪙
@@ -596,7 +596,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
 
         {/* Tab 2: Misiones Diarias */}
         {activeTab === 'missions' && (
-          <div className="p-3.5 sm:p-5 overflow-y-auto space-y-3.5 flex-1 min-h-0 overscroll-contain">
+          <div className="p-3 sm:p-4.5 overflow-y-auto space-y-2.5 sm:space-y-3 flex-1 min-h-0 overscroll-contain">
             <div className="flex items-center justify-between pb-1">
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">
@@ -619,7 +619,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                 return (
                   <div
                     key={m.id}
-                    className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                    className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 ${
                       m.claimed
                         ? 'bg-stone-900/40 border-stone-800/80 opacity-70'
                         : isClaimable
@@ -632,13 +632,13 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                         <span className="text-[10px] font-black uppercase px-2 py-0.2 rounded bg-stone-800 text-amber-400">
                           {m.category}
                         </span>
-                        <h4 className="text-sm font-bold text-amber-200">{m.title}</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-amber-200">{m.title}</h4>
                       </div>
                       <p className="text-[11px] text-stone-300">{m.description}</p>
 
                       {/* Progress bar */}
                       <div className="w-full max-w-xs flex items-center gap-2 pt-1">
-                        <div className="flex-1 h-2 bg-stone-800 rounded-full overflow-hidden border border-stone-700">
+                        <div className="flex-1 h-1.5 sm:h-2 bg-stone-800 rounded-full overflow-hidden border border-stone-700">
                           <div
                             className={`h-full transition-all duration-500 ${
                               m.completed ? 'bg-emerald-400' : 'bg-amber-400'
@@ -659,13 +659,13 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                       </span>
 
                       {m.claimed ? (
-                        <span className="px-3 py-1 bg-stone-800 text-stone-400 text-xs font-bold rounded-xl flex items-center gap-1">
+                        <span className="px-2.5 py-1 bg-stone-800 text-stone-400 text-xs font-bold rounded-xl flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" /> Reclamada
                         </span>
                       ) : isClaimable ? (
                         <button
                           onClick={() => handleClaim(m.id)}
-                          className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black text-xs rounded-xl shadow-lg animate-pulse transition-all active:scale-95 flex items-center gap-1"
+                          className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black text-xs rounded-xl shadow-lg recommend-glow transition-all active:scale-95 flex items-center gap-1"
                         >
                           <Sparkles className="w-3.5 h-3.5 fill-current" />
                           <span>Reclamar</span>
@@ -685,9 +685,9 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
 
         {/* Tab 3: Bazar Criollo (With Rich Visual Graphic Previews) */}
         {activeTab === 'bazar' && (
-          <div className="p-3.5 sm:p-5 overflow-y-auto space-y-3.5 flex-1 min-h-0 overscroll-contain">
+          <div className="p-3 sm:p-4.5 overflow-y-auto space-y-3 flex-1 min-h-0 overscroll-contain">
             {/* Filter Pills */}
-            <div className="flex flex-wrap gap-1.5 text-xs sticky -top-3.5 sm:-top-5 bg-stone-950/95 py-1.5 z-10 backdrop-blur-sm border-b border-amber-900/30">
+            <div className="flex flex-wrap gap-1.5 text-xs sticky -top-3 sm:-top-4.5 bg-stone-950/95 py-1 z-10 backdrop-blur-sm border-b border-amber-900/30">
               {[
                 { id: 'all', label: 'Todos' },
                 { id: 'mate', label: 'Mates 🧉' },
@@ -698,7 +698,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                 <button
                   key={f.id}
                   onClick={() => setBazarFilter(f.id as any)}
-                  className={`px-3 py-1 rounded-full font-bold transition-all ${
+                  className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full font-bold text-[11px] sm:text-xs transition-all ${
                     bazarFilter === f.id
                       ? 'bg-amber-500 text-stone-950 shadow'
                       : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-800'
@@ -710,7 +710,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
             </div>
 
             {/* Catalog Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {filteredCatalog.map(item => {
                 const isUnlocked = profile.unlockedItems.includes(item.id);
                 
@@ -731,7 +731,7 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                    className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col justify-between ${
                       isEquipped
                         ? 'bg-amber-950/40 border-amber-400 ring-1 ring-amber-400/50 shadow-md'
                         : isUnlocked
@@ -741,21 +741,21 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                   >
                     <div>
                       {/* Visual Item Preview + Metadata */}
-                      <div className="flex items-start gap-3 mb-2">
+                      <div className="flex items-start gap-2.5 sm:gap-3 mb-1.5">
                         {/* Graphical Preview Container */}
-                        <div className="shrink-0 p-2 rounded-2xl bg-black/50 border border-amber-900/40 flex items-center justify-center min-w-[70px] min-h-[70px]">
-                          {item.category === 'mate' && <MatePreview mateId={item.id} className="w-14 h-16" />}
-                          {item.category === 'cardBack' && <CardBackPreview cardId={item.id} className="w-12 h-16" />}
-                          {item.category === 'border' && <BorderPreview borderId={item.id} className="w-14 h-14" />}
+                        <div className="shrink-0 p-1.5 rounded-xl bg-black/50 border border-amber-900/40 flex items-center justify-center min-w-[58px] min-h-[62px] sm:min-w-[64px] sm:min-h-[68px]">
+                          {item.category === 'mate' && <MatePreview mateId={item.id} className="w-11 h-14 sm:w-13 sm:h-16" />}
+                          {item.category === 'cardBack' && <CardBackPreview cardId={item.id} className="w-10 h-14 sm:w-12 sm:h-16" />}
+                          {item.category === 'border' && <BorderPreview borderId={item.id} className="w-11 h-11 sm:w-13 sm:h-13" />}
                           {item.category === 'title' && (
-                            <div className="text-3xl flex items-center justify-center">📜</div>
+                            <div className="text-2xl sm:text-3xl flex items-center justify-center">📜</div>
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">
-                              {item.category === 'mate' ? 'Mate de Mesa' : item.category === 'title' ? 'Título' : item.category === 'border' ? 'Marco' : 'Dorso'}
+                              {item.category === 'mate' ? 'Mate' : item.category === 'title' ? 'Título' : item.category === 'border' ? 'Marco' : 'Dorso'}
                             </span>
                             {isQuickWin && !isUnlocked && (
                               <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">
@@ -764,14 +764,14 @@ export const ProfileBazarModal: React.FC<ProfileBazarModalProps> = ({
                             )}
                           </div>
 
-                          <h4 className="text-sm font-black text-amber-200 leading-tight">{item.name}</h4>
-                          <p className="text-[11px] text-stone-300 mt-1 leading-snug line-clamp-2">{item.description}</p>
+                          <h4 className="text-xs sm:text-sm font-black text-amber-200 leading-tight">{item.name}</h4>
+                          <p className="text-[10px] sm:text-[11px] text-stone-300 mt-0.5 leading-snug line-clamp-2">{item.description}</p>
                         </div>
                       </div>
 
                       {/* Title ribbon if category is title */}
                       {item.category === 'title' && (
-                        <div className="mt-1 mb-2">
+                        <div className="mt-1 mb-1.5">
                           <TitlePreview titleName={item.name} />
                         </div>
                       )}

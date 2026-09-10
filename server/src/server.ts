@@ -10,13 +10,18 @@ initDatabase();
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB max payload limit
+
 function parseJsonBody(req: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
-      // Guard against giant payloads
-      if (body.length > 1e6) req.destroy();
+      // Guard against giant payloads (DoS prevention)
+      if (body.length > MAX_BODY_BYTES) {
+        req.destroy();
+        reject(new Error('Payload demasiado grande'));
+      }
     });
     req.on('end', () => {
       try {
@@ -29,11 +34,48 @@ function parseJsonBody(req: http.IncomingMessage): Promise<any> {
   });
 }
 
+// In-memory rate limiter for API endpoints (60 req/min per IP)
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+function isRateLimited(ip: string, maxRequests = 60, windowMs = 60000): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  if (entry.count >= maxRequests) {
+    return true;
+  }
+  entry.count++;
+  return false;
+}
+
+// Cleanup expired rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const server = http.createServer(async (req, res) => {
-  // CORS headers
+  // CORS and Security Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Hardening Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -43,6 +85,14 @@ const server = http.createServer(async (req, res) => {
 
   const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
+
+  // Rate Limiting check on all API routes
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  if (pathname.startsWith('/api/') && isRateLimited(clientIp)) {
+    res.writeHead(429, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Demasiadas solicitudes. Por favor intentá más tarde.' }));
+    return;
+  }
 
   // Health check
   if (pathname === '/health') {

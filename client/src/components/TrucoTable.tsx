@@ -337,9 +337,9 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
 
   return (
     <div className="relative w-full h-[100dvh] flex flex-col bg-stone-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* Dynamic Ambient Atmosphere: Tension vignette glow */}
+      {/* Dynamic Ambient Atmosphere: Tension subtle vignette without aggressive blinking */}
       {isTensionState && (
-        <div className="absolute inset-0 bg-red-950/25 pointer-events-none z-20 animate-pulse border-4 border-red-600/50 shadow-[inset_0_0_100px_rgba(220,38,38,0.4)]"></div>
+        <div className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-700 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(185,28,28,0.3)_100%)] shadow-[inset_0_0_80px_rgba(185,28,28,0.25)]"></div>
       )}
 
       {/* Top Header Bar with Safe-Area top padding for iPhone Notch / Dynamic Island */}
@@ -365,11 +365,11 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           <div
             className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-black transition-all shadow-md flex items-center gap-1 sm:gap-1.5 ${
               isTensionState
-                ? 'bg-red-600 text-white ring-2 ring-red-300 animate-bounce'
+                ? 'bg-red-600 text-white ring-1 ring-red-400/80 shadow-[0_0_12px_rgba(220,38,38,0.6)]'
                 : state.phase === 'match_ended'
-                ? 'bg-amber-500 text-stone-950 ring-2 ring-amber-300'
+                ? 'bg-amber-500 text-stone-950 ring-1 ring-amber-300'
                 : isMyTurn
-                ? 'bg-amber-500 text-stone-950 ring-2 ring-amber-300 animate-pulse'
+                ? 'bg-amber-500 text-stone-950 ring-1 ring-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
                 : 'bg-stone-800/90 text-stone-300 border border-stone-700'
             }`}
           >
@@ -430,8 +430,8 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
 
         {/* Opponent Disconnected Banner */}
         {isOnlineMultiplayer && opponentDisconnected && !state.matchWinner && (
-          <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 bg-red-950/90 border border-red-500/80 text-red-100 rounded-2xl shadow-2xl flex items-center gap-2 animate-pulse backdrop-blur-md">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+          <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 bg-red-950/90 border border-red-500/80 text-red-100 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.4)] ring-1 ring-red-500/50 flex items-center gap-2 backdrop-blur-md">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-400/60" />
             <span className="text-[11px] sm:text-xs font-bold">
               El rival se desconectó. Esperando reconexión...
             </span>
@@ -626,7 +626,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                 onClick={() => setCoveredMode(!coveredMode)}
                 className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-black border transition-all flex items-center gap-1 shadow ${
                   coveredMode
-                    ? 'bg-amber-500 text-stone-950 border-amber-300 ring-2 ring-amber-400 animate-pulse'
+                    ? 'bg-amber-500 text-stone-950 border-amber-300 ring-1 ring-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
                     : 'bg-stone-900/90 text-stone-300 border-stone-700 hover:bg-stone-800'
                 }`}
                 title="Tirar carta boca abajo"

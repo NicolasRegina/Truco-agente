@@ -73,7 +73,7 @@ export const FanHand: React.FC<FanHandProps> = ({
           >
             {/* Coach Sparkle Tag on Recommended Card */}
             {isRecommended && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-stone-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow-lg flex items-center gap-0.5 whitespace-nowrap animate-bounce border border-amber-600">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-stone-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow-md flex items-center gap-0.5 whitespace-nowrap border border-amber-600/80 ring-1 ring-amber-300">
                 <Sparkles className="w-2.5 h-2.5 fill-current" />
                 <span>Jugar</span>
               </div>
