@@ -14,10 +14,12 @@ import {
   ShoppingBag,
   WifiOff,
   Sparkles,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { StatsModal } from './StatsModal';
 import { ProfileBazarModal } from './ProfileBazarModal';
+import { RulesModal } from './RulesModal';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
 import { profileService } from '../services/profileService';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -49,6 +51,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [withFlor, setWithFlor] = useState<boolean>(false);
   const [aiDifficulty, setAiDifficulty] = useState<BotDifficulty>('medio');
   const [showStats, setShowStats] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [stats, setStats] = useState<PlayerStats>(loadPlayerStats());
 
   // Profile & Bazar modal state
@@ -235,6 +238,15 @@ export const Lobby: React.FC<LobbyProps> = ({
           >
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
             <span className="font-mono text-[10px] sm:text-xs">Récords</span>
+          </button>
+
+          <button
+            onClick={() => setShowRules(true)}
+            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            title="Manual de reglas y jerarquía del Truco"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-[10px] sm:text-xs">Reglas</span>
           </button>
         </div>
       </header>
@@ -676,6 +688,11 @@ export const Lobby: React.FC<LobbyProps> = ({
           initialTab={profileModalTab}
           onClose={() => setShowProfileModal(false)}
         />
+      )}
+
+      {/* Rules & Hierarchy Modal */}
+      {showRules && (
+        <RulesModal onClose={() => setShowRules(false)} />
       )}
     </div>
   );
