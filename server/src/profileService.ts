@@ -333,52 +333,73 @@ export class ProfileService {
   public static recordMatchResult(
     deviceToken: string,
     won: boolean,
-    matchEvents: string[] = []
-  ): { profile: PlayerProfileDTO; coinsEarned: number; capped: boolean } {
+    matchEvents: string[] = [],
+    options?: {
+      isPrivateRoom?: boolean;
+      isForfeit?: boolean;
+      totalPointsScored?: number;
+    }
+  ): { profile: PlayerProfileDTO; coinsEarned: number; capped: boolean; reason?: string } {
     const player = this.ensurePlayer(deviceToken);
     const today = getTodayDateString();
 
-    // 1. Calculate coins with daily cap of 20
-    const rawEarn = won ? 2 : 1;
-    const availableCap = Math.max(0, 20 - player.coins_earned_today);
-    const actualCoinsEarned = Math.min(rawEarn, availableCap);
-    const isCapped = rawEarn > availableCap;
+    const isPrivate = Boolean(options?.isPrivateRoom);
+    const isEarlyForfeit = Boolean(options?.isForfeit && (options?.totalPointsScored ?? 0) < 5);
 
-    const newCoins = player.coins + actualCoinsEarned;
-    const newEarnedToday = player.coins_earned_today + actualCoinsEarned;
+    let actualCoinsEarned = 0;
+    let isCapped = false;
+    let reason = 'completed';
 
-    db.prepare(`
-      UPDATE players
-      SET coins = ?, coins_earned_today = ?, last_earn_date = ?, updated_at = ?
-      WHERE device_token = ?
-    `).run(newCoins, newEarnedToday, today, Date.now(), deviceToken);
+    if (isPrivate) {
+      actualCoinsEarned = 0;
+      reason = 'private_room';
+    } else if (isEarlyForfeit) {
+      actualCoinsEarned = 0;
+      reason = 'early_forfeit';
+    } else {
+      // 1. Calculate coins with daily cap of 20
+      const rawEarn = won ? 2 : 1;
+      const availableCap = Math.max(0, 20 - player.coins_earned_today);
+      actualCoinsEarned = Math.min(rawEarn, availableCap);
+      isCapped = rawEarn > availableCap;
 
-    // 2. Advance matching daily missions
-    // Count occurrences of each event in matchEvents
-    const eventCounts: Record<string, number> = {};
-    for (const ev of matchEvents) {
-      eventCounts[ev] = (eventCounts[ev] || 0) + 1;
+      const newCoins = player.coins + actualCoinsEarned;
+      const newEarnedToday = player.coins_earned_today + actualCoinsEarned;
+
+      db.prepare(`
+        UPDATE players
+        SET coins = ?, coins_earned_today = ?, last_earn_date = ?, updated_at = ?
+        WHERE device_token = ?
+      `).run(newCoins, newEarnedToday, today, Date.now(), deviceToken);
     }
-    // Implicit 'play_match' for any completed match
-    eventCounts['play_match'] = Math.max(1, eventCounts['play_match'] || 0);
 
-    const rawMissions = db.prepare(`
-      SELECT pm.*
-      FROM player_missions pm
-      WHERE pm.device_token = ? AND pm.date = ? AND pm.completed = 0
-    `).all(deviceToken, today) as any[];
+    // 2. Advance matching daily missions (only if not private room and not early forfeit)
+    if (!isPrivate && !isEarlyForfeit) {
+      const eventCounts: Record<string, number> = {};
+      for (const ev of matchEvents) {
+        eventCounts[ev] = (eventCounts[ev] || 0) + 1;
+      }
+      // Implicit 'play_match' for any legitimate completed match
+      eventCounts['play_match'] = Math.max(1, eventCounts['play_match'] || 0);
 
-    for (const rm of rawMissions) {
-      const def = MISSIONS_POOL.find(m => m.id === rm.mission_id);
-      if (def && eventCounts[def.eventKey]) {
-        const inc = eventCounts[def.eventKey];
-        const newProgress = Math.min(rm.target, rm.progress + inc);
-        const isDone = newProgress >= rm.target ? 1 : 0;
-        db.prepare(`
-          UPDATE player_missions
-          SET progress = ?, completed = ?
-          WHERE device_token = ? AND date = ? AND mission_id = ?
-        `).run(newProgress, isDone, deviceToken, today, rm.mission_id);
+      const rawMissions = db.prepare(`
+        SELECT pm.*
+        FROM player_missions pm
+        WHERE pm.device_token = ? AND pm.date = ? AND pm.completed = 0
+      `).all(deviceToken, today) as any[];
+
+      for (const rm of rawMissions) {
+        const def = MISSIONS_POOL.find(m => m.id === rm.mission_id);
+        if (def && eventCounts[def.eventKey]) {
+          const inc = eventCounts[def.eventKey];
+          const newProgress = Math.min(rm.target, rm.progress + inc);
+          const isDone = newProgress >= rm.target ? 1 : 0;
+          db.prepare(`
+            UPDATE player_missions
+            SET progress = ?, completed = ?
+            WHERE device_token = ? AND date = ? AND mission_id = ?
+          `).run(newProgress, isDone, deviceToken, today, rm.mission_id);
+        }
       }
     }
 
@@ -386,7 +407,8 @@ export class ProfileService {
     return {
       profile: updatedProfile,
       coinsEarned: actualCoinsEarned,
-      capped: isCapped
+      capped: isCapped,
+      reason
     };
   }
 

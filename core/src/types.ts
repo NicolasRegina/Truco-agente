@@ -112,6 +112,7 @@ export interface MatchConfig {
   withFlor: boolean;
   p1Name?: string;
   p2Name?: string;
+  isPrivate?: boolean;
 }
 
 export interface HandLogEntry {
@@ -145,6 +146,8 @@ export interface GameState {
   // Hand / Match outcome
   handWinner: PlayerId | null;
   matchWinner: PlayerId | null;
+  forfeitWinner?: PlayerId | null;
+  forfeitReason?: 'abandonment' | 'disconnect' | null;
   
   // History log for UI
   logs: HandLogEntry[];

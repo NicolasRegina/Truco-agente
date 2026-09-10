@@ -66,10 +66,11 @@ export class RoomManager {
         maxScore: config.maxScore === 15 ? 15 : 30,
         withFlor: Boolean(config.withFlor),
         p1Name: waiting.playerName,
-        p2Name: (playerName || 'Jugador 2').slice(0, 20)
+        p2Name: (playerName || 'Jugador 2').slice(0, 20),
+        isPrivate: false
       };
 
-      const { room, token: p1Token } = this.createRoom(waiting.playerName, matchConfig, waiting.socket);
+      const { room, token: p1Token } = this.createRoom(waiting.playerName, matchConfig, waiting.socket, false);
       const joinRes = this.joinRoom(room.id, playerName, socket);
 
       (waiting.socket as any).currentRoomId = room.id;
@@ -111,7 +112,7 @@ export class RoomManager {
       this.matchmakingQueue.push({
         socket,
         playerName: (playerName || 'Jugador 1').slice(0, 20),
-        config,
+        config: { ...config, isPrivate: false },
         joinedAt: Date.now()
       });
 
@@ -128,13 +129,18 @@ export class RoomManager {
     this.matchmakingQueue = this.matchmakingQueue.filter(q => q.socket !== socket);
   }
 
-  public createRoom(p1Name: string, config: MatchConfig, socket: WebSocket): { room: GameRoom; token: string } {
+  public createRoom(p1Name: string, config: MatchConfig, socket: WebSocket, isPrivate = true): { room: GameRoom; token: string } {
     const roomId = this.generateRoomId();
     const token = this.generateToken();
 
+    const roomConfig: MatchConfig = {
+      ...config,
+      isPrivate
+    };
+
     const room: GameRoom = {
       id: roomId,
-      config,
+      config: roomConfig,
       createdAt: Date.now(),
       lastActivity: Date.now(),
       p1: {
@@ -204,7 +210,65 @@ export class RoomManager {
     player.connected = true;
     room.lastActivity = Date.now();
 
+    // Notify opponent of reconnection
+    this.notifyPlayerReconnected(room, playerId);
+
+    if (room.gameState && !room.gameState.matchWinner && room.gameState.phase !== 'hand_ended') {
+      this.resetTurnTimer(room);
+    }
+
     return room;
+  }
+
+  public leaveRoom(socket: WebSocket): { success: boolean } {
+    const session = this.getSessionBySocket(socket);
+    if (!session) {
+      this.cancelMatch(socket);
+      return { success: false };
+    }
+
+    const { room, role } = session;
+    const leaver = role === 'p1' ? room.p1 : room.p2;
+    const otherRole: PlayerId = role === 'p1' ? 'p2' : 'p1';
+    const otherPlayer = role === 'p1' ? room.p2 : room.p1;
+
+    if (leaver) {
+      leaver.connected = false;
+      leaver.socket = undefined;
+      if (leaver.disconnectTimeout) {
+        clearTimeout(leaver.disconnectTimeout);
+        leaver.disconnectTimeout = undefined;
+      }
+    }
+
+    // If waiting in room before match start
+    if (!room.gameState || !room.p2) {
+      this.clearTurnTimer(room);
+      this.rooms.delete(room.id);
+      return { success: true };
+    }
+
+    // Active match: immediate forfeiture for the leaver
+    if (!room.gameState.matchWinner) {
+      room.gameState.matchWinner = otherRole;
+      room.gameState.phase = 'match_ended';
+      room.gameState.forfeitWinner = otherRole;
+      room.gameState.forfeitReason = 'abandonment';
+      room.gameState.logs.push({
+        text: `¡${leaver?.name || 'El rival'} abandonó la partida! Ganaste por abandono.`,
+        type: 'info'
+      });
+      this.clearTurnTimer(room);
+      this.broadcastState(room);
+    }
+
+    // Clean up room if other player is not connected
+    if (!otherPlayer || !otherPlayer.connected) {
+      this.clearTurnTimer(room);
+      this.rooms.delete(room.id);
+    }
+
+    return { success: true };
   }
 
   public handleDisconnect(socket: WebSocket): { room?: GameRoom; player?: PlayerSession } {
@@ -213,28 +277,97 @@ export class RoomManager {
       if (room.p1.socket === socket) {
         room.p1.connected = false;
         room.p1.socket = undefined;
-        this.scheduleDisconnectForfeit(room, 'p1');
+
+        // Waiting room: no P2 yet, clean up immediately
+        if (!room.p2) {
+          this.clearTurnTimer(room);
+          this.rooms.delete(room.id);
+          return { room, player: room.p1 };
+        }
+
+        // Active game: pause timer, notify P2 and schedule 15s forfeit grace
+        if (room.gameState && !room.gameState.matchWinner) {
+          this.clearTurnTimer(room);
+          this.notifyPlayerDisconnected(room, 'p1', 15);
+          this.scheduleDisconnectForfeit(room, 'p1', 15000);
+          return { room, player: room.p1 };
+        }
+
+        // Match already finished
+        if (!room.p2 || !room.p2.connected) {
+          this.clearTurnTimer(room);
+          this.rooms.delete(room.id);
+        }
         return { room, player: room.p1 };
       }
+
       if (room.p2 && room.p2.socket === socket) {
         room.p2.connected = false;
         room.p2.socket = undefined;
-        this.scheduleDisconnectForfeit(room, 'p2');
+
+        // Active game: pause timer, notify P1 and schedule 15s forfeit grace
+        if (room.gameState && !room.gameState.matchWinner) {
+          this.clearTurnTimer(room);
+          this.notifyPlayerDisconnected(room, 'p2', 15);
+          this.scheduleDisconnectForfeit(room, 'p2', 15000);
+          return { room, player: room.p2 };
+        }
+
+        // Match already finished
+        if (!room.p1.connected) {
+          this.clearTurnTimer(room);
+          this.rooms.delete(room.id);
+        }
         return { room, player: room.p2 };
       }
     }
     return {};
   }
 
-  private scheduleDisconnectForfeit(room: GameRoom, disconnectedPlayer: PlayerId) {
+  private notifyPlayerDisconnected(room: GameRoom, disconnectedPlayer: PlayerId, graceSeconds: number) {
+    const otherPlayer = disconnectedPlayer === 'p1' ? room.p2 : room.p1;
+    const player = disconnectedPlayer === 'p1' ? room.p1 : room.p2;
+    if (otherPlayer?.socket && otherPlayer.connected) {
+      this.send(otherPlayer.socket, {
+        type: 'PLAYER_DISCONNECTED',
+        payload: {
+          disconnectedPlayer,
+          playerName: player?.name || 'Oponente',
+          graceSeconds
+        }
+      });
+    }
+  }
+
+  private notifyPlayerReconnected(room: GameRoom, reconnectedPlayer: PlayerId) {
+    const otherPlayer = reconnectedPlayer === 'p1' ? room.p2 : room.p1;
+    const player = reconnectedPlayer === 'p1' ? room.p1 : room.p2;
+    if (otherPlayer?.socket && otherPlayer.connected) {
+      this.send(otherPlayer.socket, {
+        type: 'PLAYER_RECONNECTED',
+        payload: {
+          reconnectedPlayer,
+          playerName: player?.name || 'Oponente'
+        }
+      });
+    }
+  }
+
+  private scheduleDisconnectForfeit(room: GameRoom, disconnectedPlayer: PlayerId, graceMs = 15000) {
     const player = disconnectedPlayer === 'p1' ? room.p1 : room.p2!;
     const otherPlayer = disconnectedPlayer === 'p1' ? room.p2 : room.p1;
+    const winner: PlayerId = disconnectedPlayer === 'p1' ? 'p2' : 'p1';
+
+    if (player.disconnectTimeout) {
+      clearTimeout(player.disconnectTimeout);
+    }
 
     player.disconnectTimeout = setTimeout(() => {
       if (!player.connected && room.gameState && !room.gameState.matchWinner) {
-        const winner = disconnectedPlayer === 'p1' ? 'p2' : 'p1';
         room.gameState.matchWinner = winner;
         room.gameState.phase = 'match_ended';
+        room.gameState.forfeitWinner = winner;
+        room.gameState.forfeitReason = 'disconnect';
         room.gameState.logs.push({
           text: `Partida finalizada por desconexión de ${player.name}. Ganador: ${otherPlayer?.name || 'Oponente'}.`,
           type: 'info'
@@ -242,7 +375,7 @@ export class RoomManager {
         this.clearTurnTimer(room);
         this.broadcastState(room);
       }
-    }, DISCONNECT_GRACE_MS);
+    }, graceMs);
   }
 
   public executeAction(roomId: string, playerId: PlayerId, action: GameAction): { success: boolean; error?: string } {

@@ -45,8 +45,10 @@ interface TrucoTableProps {
   onNextHand: () => void;
   onRestartMatch: () => void;
   onBackToLobby: () => void;
+  onLeaveRoom?: () => void;
   onSendChat: (text: string) => void;
   isOnlineMultiplayer?: boolean;
+  opponentDisconnected?: boolean;
   roomId?: string;
   themeId: ThemeId;
 }
@@ -58,8 +60,10 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
   onNextHand,
   onRestartMatch,
   onBackToLobby,
+  onLeaveRoom,
   onSendChat,
   isOnlineMultiplayer = false,
+  opponentDisconnected = false,
   roomId,
   themeId
 }) => {
@@ -202,19 +206,29 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     if (state.matchWinner && !matchRewardRecorded) {
       setMatchRewardRecorded(true);
       const won = state.matchWinner === myPlayerId;
+      const isPrivateRoom = Boolean(state.config.isPrivate);
+      const isForfeit = Boolean(state.forfeitWinner);
+      const totalPointsScored = (state.score?.p1 || 0) + (state.score?.p2 || 0);
 
-      // Encuentro en la Pulpería: Completá 2 partidas en cualquier modalidad
-      trackEvent('play_match');
+      // Only track mission plays if not private room and not early forfeit
+      if (!isPrivateRoom && (!isForfeit || totalPointsScored >= 5)) {
+        // Encuentro en la Pulpería: Completá 2 partidas en cualquier modalidad
+        trackEvent('play_match');
 
-      // Duelo Gaucho: Jugá una partida en línea o contra el bot (always completed on match end)
-      trackEvent('hard_or_online_match');
+        // Duelo Gaucho: Jugá una partida en línea o contra el bot (always completed on match end)
+        trackEvent('hard_or_online_match');
 
-      // Mesa a medida: Jugá una partida personalizada (15 pts, con Flor o contra el bot)
-      if (state.config.maxScore === 15 || state.config.withFlor || !isOnlineMultiplayer) {
-        trackEvent('custom_game');
+        // Mesa a medida: Jugá una partida personalizada (15 pts, con Flor o contra el bot)
+        if (state.config.maxScore === 15 || state.config.withFlor || !isOnlineMultiplayer) {
+          trackEvent('custom_game');
+        }
       }
 
-      profileService.recordMatch(won, matchEventsRef.current).then((res) => {
+      profileService.recordMatch(won, matchEventsRef.current, {
+        isPrivateRoom,
+        isForfeit,
+        totalPointsScored
+      }).then((res) => {
         if (res) {
           setMatchReward(res);
           if (res.coinsEarned > 0) {
@@ -223,7 +237,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
         }
       });
     }
-  }, [state.matchWinner, matchRewardRecorded, myPlayerId, state.config, isOnlineMultiplayer]);
+  }, [state.matchWinner, matchRewardRecorded, myPlayerId, state.config, isOnlineMultiplayer, state.score, state.forfeitWinner]);
 
   // Handle player actions with mission tracking
   const handleAction = (action: GameAction) => {
@@ -413,6 +427,16 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
       >
         {/* Overhead tavern spotlight glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[450px] h-[250px] bg-amber-400/15 blur-3xl pointer-events-none rounded-full"></div>
+
+        {/* Opponent Disconnected Banner */}
+        {isOnlineMultiplayer && opponentDisconnected && !state.matchWinner && (
+          <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 bg-red-950/90 border border-red-500/80 text-red-100 rounded-2xl shadow-2xl flex items-center gap-2 animate-pulse backdrop-blur-md">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+            <span className="text-[11px] sm:text-xs font-bold">
+              El rival se desconectó. Esperando reconexión...
+            </span>
+          </div>
+        )}
 
         {/* Opponent Area (Top) */}
         <div className="flex flex-col items-center gap-1 sm:gap-2 z-10">
@@ -684,47 +708,80 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
             </div>
 
             <h2 className="text-xl sm:text-3xl font-black text-amber-300 mb-1 font-headline tracking-wide">
-              {state.matchWinner === myPlayerId ? '¡FELICITACIONES, GANASTE!' : '¡PARTIDA FINALIZADA!'}
+              {state.forfeitWinner
+                ? state.forfeitWinner === myPlayerId
+                  ? '¡VICTORIA POR ABANDONO!'
+                  : 'ABANDONASTE LA PARTIDA'
+                : state.matchWinner === myPlayerId
+                ? '¡FELICITACIONES, GANASTE!'
+                : '¡PARTIDA FINALIZADA!'}
             </h2>
             <p className="text-xs sm:text-sm text-stone-300 mb-3">
-              Ganador de la mesa: <strong className="text-amber-400">{state.matchWinner === 'p1' ? state.config.p1Name || 'P1' : state.config.p2Name || 'P2'}</strong>
+              {state.forfeitWinner && state.forfeitWinner === myPlayerId ? (
+                <span>El rival se retiró de la mesa. ¡Puntos y victoria otorgados!</span>
+              ) : state.forfeitWinner && state.forfeitWinner !== myPlayerId ? (
+                <span>Te retiraste de la partida. Se dio por perdida.</span>
+              ) : (
+                <span>Ganador de la mesa: <strong className="text-amber-400">{state.matchWinner === 'p1' ? state.config.p1Name || 'P1' : state.config.p2Name || 'P2'}</strong></span>
+              )}
             </p>
 
             {/* Coins Earned Badge */}
             {matchReward && (
               <div className="mb-4 py-2 px-3.5 rounded-2xl bg-black/60 border border-amber-500/50 inline-flex flex-col items-center gap-1 shadow-inner">
-                <div className="flex items-center gap-1.5">
-                  <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400 animate-bounce" />
-                  <span className="text-xs sm:text-sm font-black text-amber-300 font-mono">
-                    +{matchReward.coinsEarned} Monedas Criollas
-                  </span>
-                </div>
-                {matchReward.capped ? (
-                  <span className="text-[10px] text-stone-400 font-medium">Tope diario alcanzado (20/20 🪙)</span>
+                {matchReward.coinsEarned > 0 ? (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400 animate-bounce" />
+                      <span className="text-xs sm:text-sm font-black text-amber-300 font-mono">
+                        +{matchReward.coinsEarned} Monedas Criollas
+                      </span>
+                    </div>
+                    {matchReward.capped ? (
+                      <span className="text-[10px] text-stone-400 font-medium">Tope diario alcanzado (20/20 🪙)</span>
+                    ) : (
+                      <span className="text-[10px] text-amber-400/80 font-medium">
+                        {state.matchWinner === myPlayerId ? '¡Recompensa por ganar!' : 'Recompensa por jugar'}
+                      </span>
+                    )}
+                  </>
                 ) : (
-                  <span className="text-[10px] text-amber-400/80 font-medium">
-                    {state.matchWinner === myPlayerId ? '¡Recompensa por ganar!' : 'Recompensa por jugar'}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-stone-400 text-xs py-0.5">
+                    <Coins className="w-4 h-4 text-stone-500" />
+                    <span>
+                      {state.config.isPrivate
+                        ? 'Partida privada amistosa'
+                        : state.forfeitWinner
+                        ? 'Abandono prematuro'
+                        : matchReward.capped
+                        ? 'Tope diario alcanzado (20/20 🪙)'
+                        : 'Sin recompensa de monedas'}
+                    </span>
+                  </div>
                 )}
               </div>
             )}
 
             <div className="flex gap-2.5 sm:gap-3 mt-1">
-              <button
-                onClick={() => {
-                  setMatchRewardRecorded(false);
-                  setMatchReward(null);
-                  onRestartMatch();
-                }}
-                className="flex-1 py-3 sm:py-3.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black text-xs sm:text-base rounded-2xl shadow-xl transition-all"
-              >
-                Revancha
-              </button>
+              {!isOnlineMultiplayer && (
+                <button
+                  onClick={() => {
+                    setMatchRewardRecorded(false);
+                    setMatchReward(null);
+                    onRestartMatch();
+                  }}
+                  className="flex-1 py-3 sm:py-3.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black text-xs sm:text-base rounded-2xl shadow-xl transition-all"
+                >
+                  Revancha
+                </button>
+              )}
               <button
                 onClick={onBackToLobby}
-                className="py-3 sm:py-3.5 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs sm:text-base rounded-2xl border border-stone-600 transition-all"
+                className={`py-3 sm:py-3.5 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs sm:text-base rounded-2xl border border-stone-600 transition-all ${
+                  isOnlineMultiplayer ? 'flex-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 text-white font-black' : ''
+                }`}
               >
-                Menú
+                Volver al Menú Principal
               </button>
             </div>
           </div>
@@ -771,6 +828,9 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
           cancelLabel="Continuar Jugando"
           onConfirm={() => {
             setShowQuitConfirm(false);
+            if (onLeaveRoom) {
+              onLeaveRoom();
+            }
             onBackToLobby();
           }}
           onCancel={() => setShowQuitConfirm(false)}

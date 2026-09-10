@@ -32,7 +32,9 @@ export const App: React.FC = () => {
     onlineRoomId: serverRoomId,
     isWaitingForOpponent,
     isSearchingMatch,
+    opponentDisconnected,
     cancelMatchmaking,
+    handleLeaveRoom,
     dispatchAction,
     handleNextHand,
     handleRestartMatch,
@@ -112,6 +114,9 @@ export const App: React.FC = () => {
     if (isMatchmaking) {
       cancelMatchmaking();
     }
+    if (gameMode === 'online') {
+      handleLeaveRoom();
+    }
     setIsMatchmaking(false);
     setScreen('lobby');
     setOnlineRoomId(undefined);
@@ -160,8 +165,10 @@ export const App: React.FC = () => {
       onNextHand={handleNextHand}
       onRestartMatch={handleRestartMatch}
       onBackToLobby={handleBackToLobby}
+      onLeaveRoom={handleLeaveRoom}
       onSendChat={handleSendChat}
       isOnlineMultiplayer={gameMode === 'online'}
+      opponentDisconnected={opponentDisconnected}
       roomId={serverRoomId || onlineRoomId}
       themeId={themeId}
     />

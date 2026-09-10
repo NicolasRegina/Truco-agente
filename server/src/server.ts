@@ -87,7 +87,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/profile/match-result' && req.method === 'POST') {
       const body = await parseJsonBody(req);
-      const { token, won, matchEvents } = body;
+      const { token, won, matchEvents, isPrivateRoom, isForfeit, totalPointsScored } = body;
 
       if (!token) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -95,7 +95,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const result = ProfileService.recordMatchResult(token, Boolean(won), matchEvents || []);
+      const result = ProfileService.recordMatchResult(token, Boolean(won), matchEvents || [], {
+        isPrivateRoom: Boolean(isPrivateRoom),
+        isForfeit: Boolean(isForfeit),
+        totalPointsScored: Number(totalPointsScored || 0)
+      });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
       return;

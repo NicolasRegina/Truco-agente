@@ -241,7 +241,18 @@ class ProfileClientService {
     }
   }
 
-  public async recordMatch(won: boolean, matchEvents: string[] = []): Promise<{ coinsEarned: number; capped: boolean } | null> {
+  public async recordMatch(
+    won: boolean,
+    matchEvents: string[] = [],
+    options?: {
+      isPrivateRoom?: boolean;
+      isForfeit?: boolean;
+      totalPointsScored?: number;
+    }
+  ): Promise<{ coinsEarned: number; capped: boolean } | null> {
+    const isPrivate = Boolean(options?.isPrivateRoom);
+    const isEarlyForfeit = Boolean(options?.isForfeit && (options?.totalPointsScored ?? 0) < 5);
+
     try {
       const res = await fetch(`${SERVER_URL}/api/profile/match-result`, {
         method: 'POST',
@@ -249,7 +260,10 @@ class ProfileClientService {
         body: JSON.stringify({
           token: this.token,
           won,
-          matchEvents
+          matchEvents,
+          isPrivateRoom: isPrivate,
+          isForfeit: Boolean(options?.isForfeit),
+          totalPointsScored: options?.totalPointsScored ?? 0
         })
       });
 
@@ -260,6 +274,10 @@ class ProfileClientService {
       }
     } catch (e) {
       console.warn('Recording match result locally (offline mode):', e);
+      if (isPrivate || isEarlyForfeit) {
+        return { coinsEarned: 0, capped: false };
+      }
+
       const earn = won ? 2 : 1;
       const available = Math.max(0, this.currentProfile.dailyCapRemaining);
       const coinsEarned = Math.min(earn, available);

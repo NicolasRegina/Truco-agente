@@ -192,6 +192,11 @@ export function setupSocketHandler(ws: WebSocket, roomManager: RoomManager) {
           roomManager.broadcastChat(session.room, senderName, String(msg.payload?.text || ''));
           break;
         }
+
+        case 'LEAVE_ROOM': {
+          roomManager.leaveRoom(ws);
+          break;
+        }
       }
     } catch (err) {
       console.error('[SocketHandler] Error processing message:', err);

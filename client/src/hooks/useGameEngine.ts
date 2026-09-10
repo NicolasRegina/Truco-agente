@@ -38,6 +38,8 @@ export function useGameEngine({
   const [onlineRoomId, setOnlineRoomId] = useState<string | undefined>(roomId);
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const [isSearchingMatch, setIsSearchingMatch] = useState(false);
+  const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+  const [opponentGraceSeconds, setOpponentGraceSeconds] = useState(15);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Sync activePlayerId with myPlayerId prop
@@ -51,6 +53,7 @@ export function useGameEngine({
       setGameState(createInitialGameState(config));
       setIsWaitingForOpponent(false);
       setIsSearchingMatch(false);
+      setOpponentDisconnected(false);
     }
   }, [mode, config.maxScore, config.withFlor, config.p1Name, config.p2Name]);
 
@@ -145,7 +148,15 @@ export function useGameEngine({
           if (msg.payload.yourPlayerId) {
             setActivePlayerId(msg.payload.yourPlayerId);
           }
+          if (msg.payload.matchWinner) {
+            setOpponentDisconnected(false);
+          }
           setGameState(msg.payload);
+        } else if (msg.type === 'PLAYER_DISCONNECTED') {
+          setOpponentDisconnected(true);
+          setOpponentGraceSeconds(msg.payload?.graceSeconds || 15);
+        } else if (msg.type === 'PLAYER_RECONNECTED') {
+          setOpponentDisconnected(false);
         } else if (msg.type === 'CHAT_BROADCAST') {
           setGameState((prev) => ({
             ...prev,
@@ -253,6 +264,17 @@ export function useGameEngine({
     setIsSearchingMatch(false);
   }, [mode]);
 
+  // Leave Room / Forfeit
+  const handleLeaveRoom = useCallback(() => {
+    if (mode === 'online' && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({ type: 'LEAVE_ROOM' }));
+      } catch (e) {
+        console.error('Error sending LEAVE_ROOM', e);
+      }
+    }
+  }, [mode]);
+
   return {
     gameState,
     activePlayerId,
@@ -260,7 +282,10 @@ export function useGameEngine({
     onlineRoomId,
     isWaitingForOpponent,
     isSearchingMatch,
+    opponentDisconnected,
+    opponentGraceSeconds,
     cancelMatchmaking,
+    handleLeaveRoom,
     dispatchAction,
     handleNextHand,
     handleRestartMatch,
