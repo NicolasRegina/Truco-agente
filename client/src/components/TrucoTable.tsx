@@ -32,7 +32,8 @@ import {
   GraduationCap,
   X,
   Settings,
-  Coins
+  Coins,
+  Share2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { usePlayerProfile } from '../hooks/usePlayerProfile';
@@ -760,6 +761,32 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Viral Share Victory Button */}
+            {state.matchWinner === myPlayerId && (
+              <button
+                onClick={async () => {
+                  const myScore = myPlayerId === 'p1' ? state.score.p1 : state.score.p2;
+                  const oppScore = myPlayerId === 'p1' ? state.score.p2 : state.score.p1;
+                  const shareText = `¡Le gané ${myScore} a ${oppScore} a ${oppName} en Truquero! 🧉🔥 ¿Te la bancás para jugarme una? Entrá a la pulpería: ${window.location.origin}`;
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: '¡Victoria en Truquero!',
+                        text: shareText,
+                        url: window.location.origin
+                      });
+                      return;
+                    } catch (e) {}
+                  }
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                }}
+                className="w-full mb-3 py-2.5 sm:py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg border border-emerald-400/50 transition-all flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>🏆 Gastar a tu rival / Compartir Victoria</span>
+              </button>
             )}
 
             <div className="flex gap-2.5 sm:gap-3 mt-1">

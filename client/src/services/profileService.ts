@@ -616,6 +616,49 @@ class ProfileClientService {
   public async syncDevice(syncCode: string): Promise<{ success: boolean; error?: string }> {
     return this.requestDeviceLink(syncCode);
   }
+
+  public claimDailyLoginBonus(): { awarded: boolean; coins: number; streak: number } {
+    if (typeof localStorage === 'undefined') {
+      return { awarded: false, coins: 0, streak: 1 };
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const lastClaimDate = localStorage.getItem('truco_daily_login_date');
+
+    if (lastClaimDate === todayStr) {
+      const currentStreak = parseInt(localStorage.getItem('truco_daily_login_streak') || '1', 10);
+      return { awarded: false, coins: 0, streak: currentStreak };
+    }
+
+    // Check if consecutive day
+    let streak = 1;
+    if (lastClaimDate) {
+      const last = new Date(lastClaimDate).getTime();
+      const now = new Date(todayStr).getTime();
+      const diffDays = Math.round((now - last) / (1000 * 60 * 60 * 24));
+      const prevStreak = parseInt(localStorage.getItem('truco_daily_login_streak') || '0', 10);
+      if (diffDays === 1) {
+        streak = prevStreak + 1;
+      } else {
+        streak = 1;
+      }
+    }
+
+    const rewardCoins = streak >= 5 ? 3 : 2;
+
+    localStorage.setItem('truco_daily_login_date', todayStr);
+    localStorage.setItem('truco_daily_login_streak', streak.toString());
+
+    const updated: PlayerProfile = {
+      ...this.currentProfile,
+      coins: (this.currentProfile.coins || 0) + rewardCoins
+    };
+
+    this.setAndBroadcast(updated);
+    this.healServer(updated).catch(() => {});
+
+    return { awarded: true, coins: rewardCoins, streak };
+  }
 }
 
 export const profileService = new ProfileClientService();

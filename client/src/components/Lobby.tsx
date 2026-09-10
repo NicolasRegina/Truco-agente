@@ -12,7 +12,9 @@ import {
   Swords,
   Coins,
   ShoppingBag,
-  WifiOff
+  WifiOff,
+  Sparkles,
+  X
 } from 'lucide-react';
 import { StatsModal } from './StatsModal';
 import { ProfileBazarModal } from './ProfileBazarModal';
@@ -78,6 +80,16 @@ export const Lobby: React.FC<LobbyProps> = ({
         setRoomCode(urlRoom.toUpperCase());
         setSelectedMode('online_join');
       }
+    }
+  }, []);
+
+  const [dailyBonus, setDailyBonus] = useState<{ coins: number; streak: number } | null>(null);
+
+  // Daily retention login bonus
+  useEffect(() => {
+    const res = profileService.claimDailyLoginBonus();
+    if (res.awarded) {
+      setDailyBonus({ coins: res.coins, streak: res.streak });
     }
   }, []);
 
@@ -250,6 +262,32 @@ export const Lobby: React.FC<LobbyProps> = ({
               Podés jugar contra el Bot con todas las cartas, sonidos e IA de forma 100% offline.
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Daily Login Reward Banner */}
+      {dailyBonus && (
+        <div className="w-full max-w-md mb-2 bg-gradient-to-r from-amber-950 via-stone-900 to-amber-950 border-2 border-amber-400/80 rounded-2xl p-3 text-xs text-amber-200 flex items-center justify-between gap-2 shadow-2xl z-20 animate-speech">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 shrink-0">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <span className="font-black text-amber-300 block text-xs">
+                ¡Bienvenido a la Pulpería! (+{dailyBonus.coins} 🪙)
+              </span>
+              <span className="text-[10px] text-stone-300 leading-tight block">
+                Propina diaria por volver hoy • Racha: <strong className="text-amber-200">{dailyBonus.streak} días seguidos 🔥</strong>
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setDailyBonus(null)}
+            className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors shrink-0"
+            title="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
