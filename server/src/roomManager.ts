@@ -557,6 +557,27 @@ export class RoomManager {
     return this.rooms.get(roomId.toUpperCase());
   }
 
+  public getActiveRoomCount(): number {
+    return this.rooms.size;
+  }
+
+  public closeAllRooms(reason = 'El servidor se está reiniciando'): void {
+    for (const room of this.rooms.values()) {
+      this.clearTurnTimer(room);
+      if (room.p1.disconnectTimeout) clearTimeout(room.p1.disconnectTimeout);
+      if (room.p2?.disconnectTimeout) clearTimeout(room.p2.disconnectTimeout);
+      const msg: ServerMessage = {
+        type: 'ERROR',
+        payload: { message: reason }
+      };
+      if (room.p1.socket && room.p1.connected) this.send(room.p1.socket, msg);
+      if (room.p2?.socket && room.p2.connected) this.send(room.p2.socket, msg);
+    }
+    this.rooms.clear();
+    this.matchmakingQueue = [];
+  }
+
+
   private cleanupInactiveRooms() {
     const now = Date.now();
     for (const [id, room] of this.rooms.entries()) {

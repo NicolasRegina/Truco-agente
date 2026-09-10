@@ -62,6 +62,12 @@ function resolveServerUrl(): string {
   if (wsUrl) {
     return wsUrl.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
   }
+  if (typeof window !== 'undefined' && window.location.host) {
+    if (window.location.port === '5173') {
+      return `${window.location.protocol}//${window.location.hostname}:3001`;
+    }
+    return window.location.origin;
+  }
   if (import.meta.env.PROD) {
     return 'https://truquero.onrender.com';
   }

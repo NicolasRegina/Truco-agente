@@ -12,5 +12,16 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['lucide-react', 'canvas-confetti', 'clsx', 'tailwind-merge']
+        }
+      }
+    }
   }
 });

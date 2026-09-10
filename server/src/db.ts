@@ -60,3 +60,13 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_sync_tokens_source ON sync_tokens(source_device_token);
   `);
 }
+
+export function closeDatabase() {
+  try {
+    db.close();
+    console.log('[SQLite] Base de datos cerrada limpiamente.');
+  } catch (err) {
+    console.error('[SQLite] Error al cerrar base de datos:', err);
+  }
+}
+
