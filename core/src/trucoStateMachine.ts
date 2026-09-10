@@ -345,6 +345,7 @@ export function applyAction(currentState: GameState, action: GameAction): GameSt
         state.envido.isResolved = true;
         state.envido.winner = res.winner;
         state.envido.pointsAwarded = stakes.acceptedPoints;
+        state.envido.currentCall = null;
 
         const wName = res.winner === 'p1' ? (state.config.p1Name || 'Jugador 1') : (state.config.p2Name || 'Jugador 2');
         addLog(
@@ -415,6 +416,7 @@ export function applyAction(currentState: GameState, action: GameAction): GameSt
         state.envido.isResolved = true;
         state.envido.winner = winner;
         state.envido.pointsAwarded = stakes.declinedPoints;
+        state.envido.currentCall = null;
 
         addLog(`${oName} suma ${stakes.declinedPoints} punto(s) de Envido no querido.`, 'score');
 
@@ -478,6 +480,7 @@ export function applyAction(currentState: GameState, action: GameAction): GameSt
       // If trick 1 card 1 is played, envido is closed for this hand if not already called
       if (state.currentTrickIndex === 0 && currentTrick.cards.length === 2 && !state.envido.isResolved) {
         state.envido.isResolved = true; // Envido expired
+        state.envido.currentCall = null;
       }
 
       if (currentTrick.cards.length === 1) {

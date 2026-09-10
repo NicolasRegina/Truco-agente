@@ -3,6 +3,7 @@ import {
   calculateEnvido,
   Card,
   GameState,
+  getAvailableActions,
   hasFlor,
   PlayerId
 } from '@truco/core';
@@ -28,85 +29,93 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
   // 1. Envido is pending (Opponent called Envido/Real Envido/Falta Envido)
   if (state.phase === 'envido_pending') {
     const currentCall = state.envido.currentCall;
+    const history = state.envido.history;
+    const lastCall = history[history.length - 1];
 
-    if (currentCall === 'falta_envido') {
+    if (playerHasFlor) {
+      return {
+        recommendedAction: 'CALL_FLOR',
+        badge: 'Flor Salva',
+        title: '¡Cantá Flor!',
+        explanation: 'La Flor anula el Envido y suma 3 puntos para vos.'
+      };
+    }
+
+    if (lastCall === 'falta_envido' || currentCall === 'falta_envido') {
       if (envidoPts >= 31) {
         return {
           recommendedAction: 'QUIERO',
-          badge: 'Envido Decisivo',
-          title: '¡Aceptá la Falta Envido!',
-          explanation: `Tenés ${envidoPts} puntos, un tanto casi imbatible para definir el juego.`
+          badge: 'Gran Tanto',
+          title: '¡Quiero!',
+          explanation: `Tenés ${envidoPts} de tanto. Es un puntaje muy alto para pelear la Falta.`
         };
       }
       return {
         recommendedAction: 'NO_QUIERO',
-        badge: 'Prudencia Criolla',
-        title: 'No Quiero la Falta',
-        explanation: `Con ${envidoPts} puntos es muy riesgoso apostar la partida entera.`
+        badge: 'Prudencia',
+        title: 'No Quiero',
+        explanation: `Con ${envidoPts} puntos es arriesgado aceptar la Falta Envido.`
       };
     }
 
-    if (envidoPts >= 29) {
-      if (envidoPts >= 32 && currentCall === 'envido') {
+    if (lastCall === 'real_envido' || currentCall === 'real_envido') {
+      if (envidoPts >= 29) {
+        return {
+          recommendedAction: 'QUIERO',
+          badge: 'Buen Tanto',
+          title: '¡Quiero!',
+          explanation: `Con ${envidoPts} puntos tenés excelentes chances de ganar el Real Envido.`
+        };
+      }
+      return {
+        recommendedAction: 'NO_QUIERO',
+        badge: 'Cuidar Puntos',
+        title: 'No Quiero',
+        explanation: `Con ${envidoPts} puntos es preferible no arriesgar 3 puntos.`
+      };
+    }
+
+    // Standard Envido (2 pts)
+    if (envidoPts >= 27) {
+      if (envidoPts >= 32) {
         return {
           recommendedAction: 'CALL_REAL_ENVIDO',
-          badge: 'Tanto Gigante',
-          title: '¡Subí a Real Envido!',
-          explanation: `¡Tenés ${envidoPts} de tanto! Subile la apuesta para sacarle más puntos.`
+          badge: 'Redoblar',
+          title: '¡Real Envido!',
+          explanation: `Tenés un excelente tanto (${envidoPts} pts). ¡Aumentá la apuesta a Real Envido!`
         };
       }
       return {
         recommendedAction: 'QUIERO',
         badge: 'Buen Tanto',
         title: '¡Quiero!',
-        explanation: `Tenés ${envidoPts} puntos de envido. Tenés muy buenas chances de ganar.`
+        explanation: `Tenés ${envidoPts} puntos. Son buenos puntos para aceptar el Envido.`
       };
     }
 
-    if (envidoPts <= 26) {
-      return {
-        recommendedAction: 'NO_QUIERO',
-        badge: 'Retirada a Tiempo',
-        title: 'No Quiero',
-        explanation: `Con ${envidoPts} puntos es preferible ceder 1 punto que perder 2.`
-      };
-    }
-
-    // 27 or 28: marginal
     return {
-      recommendedAction: 'QUIERO',
-      badge: 'Tanto Medio',
-      title: 'Quiero (Ajustado)',
-      explanation: `Tenés ${envidoPts} puntos. Está parejo, pero vale la pena pelearlo.`
+      recommendedAction: 'NO_QUIERO',
+      badge: 'Bajo Tanto',
+      title: 'No Quiero',
+      explanation: `Tenés solo ${envidoPts} puntos. Mejor no arriesgar puntos de tanto.`
     };
   }
 
   // 2. Truco is pending (Opponent called Truco / Retruco / Vale Cuatro)
   if (state.phase === 'truco_pending') {
-    const sortedRanks = [...hand].map(c => c.rank).sort((a, b) => b - a);
-    const highestRank = sortedRanks[0] || 0;
-    const wonFirst = state.tricks[0]?.winner === player;
+    const lostFirstTrick = state.tricks[0]?.winner && state.tricks[0]?.winner !== player && state.tricks[0]?.winner !== 'parda';
 
-    // Has Macho (14), Hembra (13), 7s (11-12) or 3s (10)
-    if (highestRank >= 13 || (wonFirst && highestRank >= 10)) {
-      if (highestRank === 14 && state.truco.currentLevel === 'truco') {
-        return {
-          recommendedAction: 'CALL_RETRUCO',
-          badge: 'Poder Máximo',
-          title: '¡Retruco!',
-          explanation: 'Tenés el As de Espadas ("El Macho"). Apretá con Retruco.'
-        };
-      }
+    // If opponent called Truco before Envido was resolved, reminder "El envido está primero"
+    if (state.currentTrickIndex === 0 && !state.envido.isResolved && envidoPts >= 28) {
       return {
-        recommendedAction: 'QUIERO',
-        badge: 'Mano Fuerte',
-        title: '¡Quiero el Truco!',
-        explanation: 'Tenés cartas altas suficientes para pelear la mano.'
+        recommendedAction: 'CALL_ENVIDO',
+        badge: 'El Envido va primero',
+        title: '¡Cantá Envido!',
+        explanation: `Por ley del Truco, el Envido va antes. Tenés ${envidoPts} de tanto para aprovechar.`
       };
     }
 
-    // If lost first trick and highest card is weak
-    if (state.tricks[0]?.winner && state.tricks[0].winner !== player && highestRank < 9) {
+    if (lostFirstTrick) {
       return {
         recommendedAction: 'NO_QUIERO',
         badge: 'Cuidar Puntos',
@@ -125,9 +134,11 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
 
   // 3. Normal turn (Waiting action: can play card, call Envido, Flor or Truco)
   if (state.phase === 'waiting_action') {
-    // A) If trick 0 and Envido is still open
+    const availableActions = getAvailableActions(state, player);
+
+    // A) If trick 0 and Envido is still open and available to execute
     if (state.currentTrickIndex === 0 && !state.envido.isResolved && state.envido.history.length === 0) {
-      if (playerHasFlor) {
+      if (playerHasFlor && availableActions.includes('CALL_FLOR')) {
         return {
           recommendedAction: 'CALL_FLOR',
           badge: '¡Flor Criolla!',
@@ -136,7 +147,7 @@ export function getCoachAdvice(state: GameState, player: PlayerId): CoachAdvice 
         };
       }
 
-      if (envidoPts >= 28) {
+      if (envidoPts >= 28 && availableActions.includes('CALL_ENVIDO')) {
         return {
           recommendedAction: 'CALL_ENVIDO',
           badge: 'Buen Envido',

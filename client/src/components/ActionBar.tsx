@@ -58,7 +58,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 onClick={() => handleAction('QUIERO')}
                 className={`
                   flex-1 min-w-[90px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-emerald-400/50 transition-all flex flex-col items-center justify-center
-                  ${recommendedAction === 'QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                  ${recommendedAction === 'QUIERO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
                 `}
               >
                 <span>¡Quiero!</span>
@@ -73,7 +73,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 onClick={() => handleAction('NO_QUIERO')}
                 className={`
                   flex-1 min-w-[90px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-rose-700 to-red-800 hover:from-rose-600 hover:to-red-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-rose-400/50 transition-all flex flex-col items-center justify-center
-                  ${recommendedAction === 'NO_QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                  ${recommendedAction === 'NO_QUIERO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
                 `}
               >
                 <span>No Quiero</span>
@@ -88,7 +88,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 onClick={() => handleAction('CALL_RETRUCO')}
                 className={`
                   flex-1 min-w-[100px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-blue-400/50 transition-all flex flex-col items-center justify-center
-                  ${recommendedAction === 'CALL_RETRUCO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                  ${recommendedAction === 'CALL_RETRUCO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
                 `}
               >
                 <span>¡Quiero Re-Truco!</span>
@@ -101,7 +101,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 onClick={() => handleAction('CALL_VALE_CUATRO')}
                 className={`
                   flex-1 min-w-[100px] py-2 sm:py-2.5 px-2.5 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 active:scale-95 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg border border-amber-300 transition-all flex flex-col items-center justify-center
-                  ${recommendedAction === 'CALL_VALE_CUATRO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                  ${recommendedAction === 'CALL_VALE_CUATRO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
                 `}
               >
                 <span>¡Quiero Vale Cuatro!</span>
@@ -151,7 +151,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               onClick={() => handleAction('QUIERO')}
               className={`
                 flex-1 py-2 sm:py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-emerald-400/50 transition-all flex items-center justify-center gap-1
-                ${recommendedAction === 'QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                ${recommendedAction === 'QUIERO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
               `}
             >
               {recommendedAction === 'QUIERO' && <Sparkles className="w-3.5 h-3.5 fill-current text-amber-300" />}
@@ -164,7 +164,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               onClick={() => handleAction('NO_QUIERO')}
               className={`
                 flex-1 py-2 sm:py-2.5 px-3 bg-gradient-to-r from-rose-700 to-red-800 hover:from-rose-600 hover:to-red-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg border border-rose-400/50 transition-all flex items-center justify-center gap-1
-                ${recommendedAction === 'NO_QUIERO' ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse' : ''}
+                ${recommendedAction === 'NO_QUIERO' ? 'recommend-glow ring-2 ring-amber-400' : ''}
               `}
             >
               {recommendedAction === 'NO_QUIERO' && <Sparkles className="w-3.5 h-3.5 fill-current text-amber-300" />}
@@ -299,7 +299,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       className={`
         py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl font-black text-xs sm:text-sm border shadow-lg transition-all flex items-center gap-1.5 active:scale-95
         ${colorStyles}
-        ${isRecommended ? 'ring-4 ring-amber-400 shadow-[0_0_20px_rgba(245,158,11,1)] animate-pulse' : ''}
+        ${isRecommended ? 'recommend-glow ring-2 ring-amber-400' : ''}
       `}
     >
       {isRecommended && <Sparkles className="w-3 h-3 fill-current text-amber-300" />}

@@ -32,10 +32,10 @@ export const ThemeStoreModal: React.FC<ThemeStoreModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 animate-speech overflow-y-auto">
-      <div className="bg-wood-border border-2 border-amber-500/70 rounded-3xl max-w-4xl w-full p-4 sm:p-6 text-amber-100 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center pt-[max(env(safe-area-inset-top,0px),24px)] pb-[max(env(safe-area-inset-bottom,0px),24px)] px-3 sm:px-5 animate-speech overflow-hidden">
+      <div className="bg-wood-border border-2 border-amber-500/70 rounded-3xl max-w-4xl w-full p-4 sm:p-6 text-amber-100 shadow-2xl flex flex-col h-[75vh] sm:h-[82vh] max-h-[75vh] sm:max-h-[82vh] overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-amber-800/60 pb-3 mb-4">
+        <div className="flex items-center justify-between border-b border-amber-800/60 pb-3 mb-4 shrink-0">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40">
               <Sparkles className="w-5 h-5" />
@@ -54,7 +54,7 @@ export const ThemeStoreModal: React.FC<ThemeStoreModalProps> = ({
         </div>
 
         {/* Content: 2-Column Grid (Theme List & Live Preview) */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 overflow-y-auto pr-1 overscroll-contain">
           {/* Left: Theme Cards Selector (7 cols) */}
           <div className="md:col-span-7 flex flex-col gap-2.5">
             <span className="text-xs font-black uppercase tracking-wider text-amber-400">Colecciones Disponibles</span>

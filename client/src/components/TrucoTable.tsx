@@ -242,11 +242,11 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
     onAction(action);
   };
 
-  // High tension state detection
+  // High tension state detection (active only during pending high-stakes challenges or match point)
   const isTensionState =
-    state.truco.currentLevel === 'retruco' ||
-    state.truco.currentLevel === 'vale_cuatro' ||
-    state.envido.currentCall === 'falta_envido' ||
+    (state.phase === 'truco_pending' && (state.truco.pendingLevel === 'retruco' || state.truco.pendingLevel === 'vale_cuatro')) ||
+    (state.phase === 'envido_pending' && state.envido.currentCall === 'falta_envido') ||
+    (state.phase === 'flor_pending' && state.flor.history.includes('contraflor_al_resto')) ||
     (state.score.p1 >= 26 && state.score.p2 >= 26);
 
   // Play tension sound on high-stakes phases
