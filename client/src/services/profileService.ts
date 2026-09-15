@@ -628,7 +628,9 @@ class ProfileClientService {
       return { awarded: false, coins: 0, streak: 1 };
     }
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // Use local calendar date (YYYY-MM-DD) so day boundaries align with local midnight
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const lastClaimDate = localStorage.getItem('truco_daily_login_date');
 
     if (lastClaimDate === todayStr) {
@@ -636,16 +638,21 @@ class ProfileClientService {
       return { awarded: false, coins: 0, streak: currentStreak };
     }
 
-    // Check if consecutive day
+    // Calculate calendar days difference using UTC midnight anchor (DST-safe)
     let streak = 1;
-    if (lastClaimDate) {
-      const last = new Date(lastClaimDate).getTime();
-      const now = new Date(todayStr).getTime();
-      const diffDays = Math.round((now - last) / (1000 * 60 * 60 * 24));
+    if (lastClaimDate && /^\d{4}-\d{2}-\d{2}$/.test(lastClaimDate)) {
+      const [y1, m1, d1] = lastClaimDate.split('-').map(Number);
+      const [y2, m2, d2] = todayStr.split('-').map(Number);
+      const utc1 = Date.UTC(y1, m1 - 1, d1);
+      const utc2 = Date.UTC(y2, m2 - 1, d2);
+      const diffDays = Math.round((utc2 - utc1) / (1000 * 60 * 60 * 24));
       const prevStreak = parseInt(localStorage.getItem('truco_daily_login_streak') || '0', 10);
+
       if (diffDays === 1) {
+        // Consecutive day: advance streak
         streak = prevStreak + 1;
       } else {
+        // Skipped 2+ days (diffDays > 1) or clock glitch: strict reset back to 1!
         streak = 1;
       }
     }
