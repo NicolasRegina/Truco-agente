@@ -9,11 +9,17 @@
 html, body, #root {
   height: 100%;
   height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overflow-x: hidden !important;
+  overscroll-behavior: none;
+  overscroll-behavior-x: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
   touch-action: manipulation;
   background-color: #0a0503;
 }
@@ -32,18 +38,35 @@ img {
   -webkit-backface-visibility: hidden;
 }
 
-/* Safe Area Insets for iOS Notch, Dynamic Island, and Home Bar */
+/* Safe Area Insets for iOS Notch, Dynamic Island (iPhone 14/15/16/17), and Home Indicator */
 .safe-top {
-  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
 }
 
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
 }
 
+.safe-left {
+  padding-left: max(env(safe-area-inset-left, 0px), 12px);
+}
+
+.safe-right {
+  padding-right: max(env(safe-area-inset-right, 0px), 12px);
+}
+
 .safe-px {
   padding-left: max(env(safe-area-inset-left, 0px), 12px);
   padding-right: max(env(safe-area-inset-right, 0px), 12px);
+}
+
+/* Hide scrollbars for clean mobile game presentation */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Argentine Felt Table Pattern */

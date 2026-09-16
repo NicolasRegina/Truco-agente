@@ -37,7 +37,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   const can = (type: ActionType) => isMyTurn && availableActions.includes(type);
 
   return (
-    <div className="w-full max-w-xl px-12 sm:px-4 py-1 flex flex-col gap-1.5">
+    <div className="w-full max-w-xl px-7 min-[400px]:px-10 sm:px-4 py-1 flex flex-col gap-1.5">
       {/* Truco Challenge Response Panel */}
       {state.phase === 'truco_pending' && (
         <div className="flex flex-col gap-1.5 p-2 bg-stone-950/85 backdrop-blur-md rounded-2xl border-2 border-amber-500/60 shadow-2xl animate-speech">

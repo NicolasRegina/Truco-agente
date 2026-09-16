@@ -344,7 +344,7 @@ export const TrucoTable: React.FC<TrucoTableProps> = ({
       )}
 
       {/* Top Header Bar with Safe-Area top padding for iPhone Notch / Dynamic Island */}
-      <header className="flex items-center justify-between px-2.5 sm:px-6 pt-[max(env(safe-area-inset-top,0px),10px)] pb-1.5 bg-black/65 backdrop-blur-md border-b border-amber-900/50 z-30 shadow-md shrink-0">
+      <header className="flex items-center justify-between px-2.5 sm:px-6 safe-top safe-px pb-1.5 bg-black/65 backdrop-blur-md border-b border-amber-900/50 z-30 shadow-md shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowQuitConfirm(true)}

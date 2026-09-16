@@ -185,28 +185,28 @@ export const Lobby: React.FC<LobbyProps> = ({
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
-      className="w-full min-h-[100dvh] flex flex-col items-center justify-between p-3 sm:p-6 overflow-y-auto relative text-amber-100 pt-[max(env(safe-area-inset-top,0px),12px)] pb-[max(env(safe-area-inset-bottom,0px),16px)] selection:bg-amber-500 selection:text-stone-950 bg-[#0a0503]"
+      className="w-full max-w-full min-h-[100dvh] flex flex-col items-center justify-between p-2.5 sm:p-6 overflow-x-hidden overflow-y-auto relative text-amber-100 safe-top safe-bottom safe-px selection:bg-amber-500 selection:text-stone-950 bg-[#0a0503]"
     >
-      {/* Overhead Tavern Ambient Spotlight */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/12 blur-[130px] pointer-events-none rounded-full"></div>
+      {/* Overhead Tavern Ambient Spotlight (Constrained to screen bounds) */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] sm:max-w-[700px] h-[350px] sm:h-[400px] bg-amber-500/12 blur-[100px] sm:blur-[130px] pointer-events-none rounded-full"></div>
 
-      {/* Top Utility Header Bar */}
-      <header className="w-full max-w-lg flex items-center justify-between z-20 mb-1 sm:mb-2 px-1">
+      {/* Top Utility Header Bar - Dynamically fits 360px - 430px mobile screens without overflow */}
+      <header className="w-full max-w-md sm:max-w-lg flex items-center justify-between z-20 mb-1.5 sm:mb-2 px-0.5 sm:px-1 gap-1.5 shrink-0">
         {/* Profile & Coins Badge */}
         <button
           onClick={() => {
             setProfileModalTab('profile');
             setShowProfileModal(true);
           }}
-          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-200 shadow-xl flex items-center gap-2 text-xs font-bold transition-all active:scale-95 group relative"
+          className="px-2 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-200 shadow-xl flex items-center gap-1.5 sm:gap-2 text-xs font-bold transition-all active:scale-95 group relative shrink min-w-0"
           title="Ver perfil y misiones"
         >
-          <div className="flex items-center gap-1 font-mono text-amber-300">
+          <div className="flex items-center gap-1 font-mono text-amber-300 shrink-0">
             <Coins className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
             <span>{profile?.coins ?? 5}</span>
           </div>
-          <span className="w-px h-3 bg-amber-900/80"></span>
-          <span className="truncate max-w-[90px] sm:max-w-[120px] text-amber-100 text-[10px] sm:text-xs">
+          <span className="w-px h-3 bg-amber-900/80 shrink-0"></span>
+          <span className="truncate max-w-[65px] min-[370px]:max-w-[85px] min-[410px]:max-w-[120px] text-amber-100 text-[10px] sm:text-xs">
             {profile?.equippedTitle || 'Gaucho'}
           </span>
           {hasClaimableMissions && (
@@ -214,17 +214,17 @@ export const Lobby: React.FC<LobbyProps> = ({
           )}
         </button>
 
-        {/* Right Buttons: Bazar & Récords */}
-        <div className="flex items-center gap-1.5">
+        {/* Right Buttons: Bazar, Récords & Reglas */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <button
             onClick={() => {
               setProfileModalTab('bazar');
               setShowProfileModal(true);
             }}
-            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-amber-950/80 hover:bg-amber-900/90 border border-amber-500/60 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            className="px-2 py-1 sm:px-2.5 sm:py-1 rounded-full bg-amber-950/80 hover:bg-amber-900/90 border border-amber-500/60 text-amber-300 shadow-xl flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
             title="Tienda"
           >
-            <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+            <ShoppingBag className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="text-[10px] sm:text-xs">Tienda</span>
           </button>
 
@@ -233,19 +233,19 @@ export const Lobby: React.FC<LobbyProps> = ({
               setStats(loadPlayerStats());
               setShowStats(true);
             }}
-            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            className="px-2 py-1 sm:px-2.5 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
             title="Ver estadísticas y récords"
           >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-mono text-[10px] sm:text-xs">Récords</span>
+            <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="font-mono text-[10px] sm:text-xs hidden min-[360px]:inline">Récords</span>
           </button>
 
           <button
             onClick={() => setShowRules(true)}
-            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95"
+            className="px-2 py-1 sm:px-2.5 sm:py-1 rounded-full bg-stone-900/90 hover:bg-stone-800 border border-amber-500/50 text-amber-300 shadow-xl flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
             title="Manual de reglas y jerarquía del Truco"
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="text-[10px] sm:text-xs">Reglas</span>
           </button>
         </div>
