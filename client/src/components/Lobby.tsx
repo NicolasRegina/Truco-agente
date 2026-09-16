@@ -185,7 +185,7 @@ export const Lobby: React.FC<LobbyProps> = ({
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
-      className="w-full max-w-full min-h-[100dvh] flex flex-col items-center justify-between p-2.5 sm:p-6 overflow-x-hidden overflow-y-auto relative text-amber-100 safe-top safe-bottom safe-px selection:bg-amber-500 selection:text-stone-950 bg-[#0a0503]"
+      className="w-full max-w-full h-full min-h-[100dvh] flex-1 flex flex-col items-center justify-between p-2.5 sm:p-6 overflow-x-hidden overflow-y-auto relative text-amber-100 safe-top safe-bottom safe-px selection:bg-amber-500 selection:text-stone-950 bg-[#0a0503]"
     >
       {/* Overhead Tavern Ambient Spotlight (Constrained to screen bounds) */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] sm:max-w-[700px] h-[350px] sm:h-[400px] bg-amber-500/12 blur-[100px] sm:blur-[130px] pointer-events-none rounded-full"></div>
@@ -251,16 +251,18 @@ export const Lobby: React.FC<LobbyProps> = ({
         </div>
       </header>
 
-      {/* Hero Brand Section: Grand Title */}
-      <div className="text-center my-2 sm:my-3 max-w-lg z-10 flex flex-col items-center">
-        {/* Grand Chiseled Golden Title */}
-        <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 tracking-wider font-headline drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-          TRUCO ARGENTINO
-        </h1>
-        <p className="text-[11px] sm:text-xs text-amber-200/80 font-medium max-w-sm mt-1">
-          Picardía, señas, mentiras criollas y tanteador tradicional
-        </p>
-      </div>
+      {/* Central Game Setup Hub - Fills and balances vertical space across tall devices (19.5:9 / 20:9) */}
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center my-auto z-10 py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+        {/* Hero Brand Section: Grand Title */}
+        <div className="text-center my-1 sm:my-2 max-w-lg z-10 flex flex-col items-center">
+          {/* Grand Chiseled Golden Title */}
+          <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 tracking-wider font-headline drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+            TRUCO ARGENTINO
+          </h1>
+          <p className="text-[11px] sm:text-xs text-amber-200/80 font-medium max-w-sm mt-0.5">
+            Picardía, señas, mentiras criollas y tanteador tradicional
+          </p>
+        </div>
 
       {/* Offline Mode Banner */}
       {!isOnline && (
@@ -668,9 +670,10 @@ export const Lobby: React.FC<LobbyProps> = ({
           )}
         </button>
       </div>
+      </div>
 
-      {/* Footer */}
-      <footer className="mt-2 text-center text-[11px] text-amber-200/60 font-medium flex items-center justify-center gap-2 select-none">
+      {/* Footer - Positioned cleanly at the safe base of the screen */}
+      <footer className="w-full shrink-0 pt-2 pb-1 text-center text-[11px] text-amber-200/60 font-medium flex items-center justify-center gap-2 select-none z-10">
         <span>Mano a mano sin 8s ni 9s</span>
         <span className="text-amber-500/40">•</span>
         <span>Desarrollado por <strong className="text-amber-300/90 font-semibold tracking-wide">nicosmico</strong></span>

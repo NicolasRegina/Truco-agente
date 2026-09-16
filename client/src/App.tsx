@@ -137,7 +137,7 @@ export const App: React.FC = () => {
 
   if (screen === 'lobby') {
     return (
-      <>
+      <div className="w-full h-full min-h-[100dvh] flex flex-col flex-1 overflow-hidden bg-[#0a0503]">
         <Lobby
           onStartAiGame={handleStartAiGame}
           onStartMatchmaking={handleStartMatchmaking}
@@ -212,7 +212,7 @@ export const App: React.FC = () => {
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   }
 
